@@ -173,3 +173,12 @@ export interface Deck {
   title: string;
   cards: Flashcard[];
 }
+
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}

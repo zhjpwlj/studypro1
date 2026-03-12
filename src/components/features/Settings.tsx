@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Database, Cloud, Loader2, User as UserIcon, Globe, Palette, Sun, Moon, Check, Info, Upload } from 'lucide-react';
+import { Database, Cloud, Loader2, User as UserIcon, Globe, Palette, Sun, Moon, Check, Info, Upload, Key } from 'lucide-react';
 import { backupData, restoreData, getLastSyncTime, signOut } from '../../services/supabaseService';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { LanguageContext } from '../../contexts/LanguageContext';
@@ -32,6 +32,34 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  useEffect(() => {
+    const checkApiKey = async (): Promise<void> => {
+      if (window.aistudio?.hasSelectedApiKey) {
+        try {
+          const hasKey = await window.aistudio.hasSelectedApiKey();
+          setHasApiKey(hasKey);
+        } catch (err) {
+          console.error('Error checking API key:', err);
+        }
+      }
+    };
+    checkApiKey();
+  }, []);
+
+  const handleOpenSelectKey = async (): Promise<void> => {
+    if (window.aistudio?.openSelectKey) {
+      try {
+        await window.aistudio.openSelectKey();
+        // After opening, we assume success or user interaction
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        setHasApiKey(hasKey);
+      } catch (err) {
+        console.error('Error opening key selector:', err);
+      }
+    }
+  };
   
   const { language, setLanguage, t } = useContext(LanguageContext);
   
@@ -263,10 +291,53 @@ const Settings: React.FC<SettingsProps> = (props) => {
     </div>
   );
 
+  const renderAIConfigTab = (): React.ReactNode => (
+    <div className="space-y-8 animate-fade-in">
+        <section>
+          <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-white">{t('aiConfig')}</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700/50 space-y-4">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Key size={20} className={hasApiKey ? "text-emerald-500" : "text-amber-500"} />
+                    <div>
+                        <h4 className="font-semibold">{t('apiKeyRequired')}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {hasApiKey ? t('apiKeyActive') : "No API key selected. AI features may be limited."}
+                        </p>
+                    </div>
+                </div>
+                <button 
+                  onClick={handleOpenSelectKey} 
+                  className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover flex items-center gap-2"
+                >
+                  <Key size={16} />
+                  {t('getApiKey')}
+                </button>
+             </div>
+             <div className="pt-4 border-t border-gray-100 dark:border-slate-700/50">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  To use advanced AI features, you must select a paid API key from a Google Cloud project.
+                </p>
+                <a 
+                  href="https://ai.google.dev/gemini-api/docs/billing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-accent hover:underline flex items-center gap-1"
+                >
+                  <Info size={12} />
+                  {t('billingDocs')}
+                </a>
+             </div>
+          </div>
+        </section>
+    </div>
+  );
+
   const TABS = [
       { id: 'general', label: t('general'), icon: Database },
       { id: 'appearance', label: t('appearance'), icon: Palette },
       { id: 'sync', label: t('account'), icon: Cloud },
+      { id: 'ai', label: t('aiConfig'), icon: Key },
   ];
 
   return (
@@ -289,6 +360,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
           {activeTab === 'general' && renderGeneralTab()}
           {activeTab === 'appearance' && renderAppearanceTab()}
           {activeTab === 'sync' && renderSyncTab()}
+          {activeTab === 'ai' && renderAIConfigTab()}
       </main>
       <ConfirmationModal
         isOpen={isRestoreModalOpen}

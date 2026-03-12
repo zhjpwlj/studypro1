@@ -112,7 +112,7 @@ const tools: FunctionDeclaration[] = [
 ];
 
 const getApiKey = (): string | null => {
-  return process.env.GEMINI_API_KEY || null;
+  return process.env.API_KEY || process.env.GEMINI_API_KEY || null;
 };
 
 export const createChatSession = (): Chat | null => {
