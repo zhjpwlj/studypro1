@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Check, Star, PawPrint, Film, Coffee, Building, Mountain, WandSparkles, PlayCircle, Youtube } from 'lucide-react';
-import { wallpapers, wallpaperCategories, accentColors, liveWallpapers } from '../../config/theme.ts';
+import { wallpapers, wallpaperCategories, accentColors, liveWallpapers } from '../../config/theme';
 
 interface ThemeProps {
   isDarkMode: boolean;

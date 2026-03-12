@@ -26,7 +26,7 @@ const Launchpad = lazy(() => import('./components/features/Launchpad'));
 
 import { AppModule, WindowConfig, Language } from './types';
 import { usePersistentState } from './hooks/usePersistentState';
-import { wallpapers, accentColors } from './config/theme.ts';
+import { wallpapers, accentColors } from './config/theme';
 import { backupData } from './services/supabaseService';
 import { translations } from './utils/translations';
 import { LanguageContext } from './contexts/LanguageContext';
@@ -136,7 +136,7 @@ const App: React.FC<AppProps> = ({ user, onRestoreData }) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `studypro_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `studypro_backup_${new Date().toISOString().split('T')[0] || 'backup'}.json`;
       a.click();
       URL.revokeObjectURL(url);
   };

@@ -41,8 +41,9 @@ const Notes: React.FC<NotesProps> = ({ notes, onAddNote, onUpdateNote, onDeleteN
     if (activeNoteId && !notes.find(n => n.id === activeNoteId)) {
       setActiveNoteId(null);
     }
-    if(!activeNoteId && sortedNotes.length > 0) {
-      setActiveNoteId(sortedNotes[0].id);
+    const firstNote = sortedNotes[0];
+    if(!activeNoteId && firstNote) {
+      setActiveNoteId(firstNote.id);
     }
   }, [notes, activeNoteId, activeCategory, sortedNotes]);
 

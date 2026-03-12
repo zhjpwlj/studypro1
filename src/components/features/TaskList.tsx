@@ -60,7 +60,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, setTasks, setProje
 
   const handleAddProject = (): void => {
     if (!newProjectName.trim()) return;
-    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)] ?? '#ef4444';
     const newProject: Project = { id: `proj-${Date.now()}`, name: newProjectName.trim(), color: randomColor };
     setProjects(prev => [...prev, newProject]);
     setActiveFilter(newProject.id);
@@ -72,8 +72,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, setTasks, setProje
     e.preventDefault();
     if (!newTaskName.trim()) return;
     
-    let projectId = activeFilter.startsWith('proj-') ? activeFilter : projects[0]?.id;
-    if (!projectId && projects.length > 0) projectId = projects[0].id;
+    const firstProject = projects[0];
+    let projectId = activeFilter.startsWith('proj-') ? activeFilter : firstProject?.id;
+    if (!projectId && firstProject) projectId = firstProject.id;
 
     const newTask: Task = { 
       id: `task-${Date.now()}`, 
@@ -85,7 +86,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, setTasks, setProje
       tags: [], 
       subtasks: [],
       inMyDay: activeFilter === 'myday',
-      deadline: activeFilter === 'today' ? new Date().toISOString().split('T')[0] : undefined
+      deadline: activeFilter === 'today' ? (new Date().toISOString().split('T')[0] || undefined) : undefined
     };
     setTasks(prev => [...prev, newTask]);
     setNewTaskName('');
@@ -214,7 +215,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, setTasks, setProje
                                      </span>
                                  )}
                                  {task.deadline && (
-                                     <span className={`flex items-center gap-1 ${task.deadline < new Date().toISOString().split('T')[0] ? 'text-red-400' : ''}`}>
+                                     <span className={`flex items-center gap-1 ${task.deadline < (new Date().toISOString().split('T')[0] || '') ? 'text-red-400' : ''}`}>
                                          <Calendar size={10} />
                                          {new Date(task.deadline).toLocaleDateString(language === 'en' ? 'en-US' : language === 'jp' ? 'ja-JP' : 'zh-CN', { month: 'short', day: 'numeric' })}
                                      </span>

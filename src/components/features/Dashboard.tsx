@@ -39,7 +39,10 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, projects, setProjects, tim
         })).filter(p => p.value > 0);
     }, [projects, tasks]);
     
-    const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const todayStr = useMemo(() => {
+        const parts = new Date().toISOString().split('T');
+        return parts[0] || '';
+    }, []);
     const goalsCompleted = useMemo(() => goals.filter(g => g.completedDates.includes(todayStr)).length, [goals, todayStr]);
     const goalsProgress = goals.length > 0 ? (goalsCompleted / goals.length) * 100 : 0;
     const nextIncompleteGoal = useMemo(() => goals.find(g => !g.completedDates.includes(todayStr)), [goals, todayStr]);

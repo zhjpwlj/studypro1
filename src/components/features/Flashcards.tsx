@@ -23,8 +23,10 @@ const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (
     const currentCard = queue[currentIndex];
 
     const handleRate = (difficulty: 'easy' | 'good' | 'hard' | 'again'): void => {
+        const card = queue[currentIndex];
+        if (!card) return;
         // Simple SRS Logic (Leitner-ish)
-        let newBox = currentCard.box;
+        let newBox = card.box;
         let nextReview = Date.now();
         const DAY = 24 * 60 * 60 * 1000;
 
@@ -35,7 +37,7 @@ const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (
             case 'again': newBox = 0; nextReview += 1000 * 60; break; // 1 min
         }
 
-        onUpdateCard(deck.id, currentCard.id, { box: newBox, nextReview });
+        onUpdateCard(deck.id, card.id, { box: newBox, nextReview });
 
         if (currentIndex < queue.length - 1) {
             setCurrentIndex(currentIndex + 1);

@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { Project, Task, TimeEntry, ActiveTimer, Note, Event, Goal, Class, Deck } from '../types';
+import { Project, Task, TimeEntry, ActiveTimer, Note, Event, Goal, Class, Deck, TaskStatus } from '../types';
 import { usePersistentState } from './usePersistentState';
 
 const getTomorrow = (): string => {

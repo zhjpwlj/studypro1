@@ -4,9 +4,9 @@ import { getSession, onAuthStateChange, restoreData, signOut } from '../../servi
 const App = lazy(() => import('../../App'));
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
-import { wallpapers } from '../../config/theme.ts';
+import { wallpapers } from '../../config/theme';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 
 // Create a mock user for the demo mode
 const demoUser: User = {

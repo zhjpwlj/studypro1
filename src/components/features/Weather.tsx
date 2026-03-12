@@ -84,8 +84,8 @@ const CurrentWeatherDetails = ({ weatherData }: { weatherData: WeatherData }): R
             <div className="flex items-center gap-2"><Wind size={16} /><span className="text-xs">{t('wind')}: <strong>{Math.round(weatherData.current.wind_speed_10m)} km/h</strong></span></div>
             <div className="flex items-center gap-2"><Gauge size={16} /><span className="text-xs">{t('pressure')}: <strong>{Math.round(weatherData.current.surface_pressure)} hPa</strong></span></div>
             <div className="flex items-center gap-2"><Eye size={16} /><span className="text-xs">{t('visibility')}: <strong>{(weatherData.current.visibility / 1000).toFixed(1)} km</strong></span></div>
-            <div className="flex items-center gap-2"><Sunrise size={16} /><span className="text-xs">{t('sunrise')}: <strong>{formatTime(weatherData.daily.sunrise[0])}</strong></span></div>
-            <div className="flex items-center gap-2"><Sunset size={16} /><span className="text-xs">{t('sunset')}: <strong>{formatTime(weatherData.daily.sunset[0])}</strong></span></div>
+            <div className="flex items-center gap-2"><Sunrise size={16} /><span className="text-xs">{t('sunrise')}: <strong>{formatTime(weatherData.daily.sunrise[0] ?? '')}</strong></span></div>
+            <div className="flex items-center gap-2"><Sunset size={16} /><span className="text-xs">{t('sunset')}: <strong>{formatTime(weatherData.daily.sunset[0] ?? '')}</strong></span></div>
         </div>
     </div>
     );
@@ -100,10 +100,10 @@ const Forecast = ({ weatherData }: { weatherData: WeatherData }): React.ReactEle
              {weatherData.daily.time.map((day: string, index: number) => (
                  <div key={day} className="flex-shrink-0 flex flex-col items-center justify-between p-3 bg-black/20 rounded-lg w-20 h-32">
                      <p className="font-bold text-sm">{index === 0 ? t('today') : getDayOfWeek(day)}</p>
-                     {React.createElement(getWeatherInfo(weatherData.daily.weather_code[index]).icon, { size: 28, className:"my-1" })}
+                     {React.createElement(getWeatherInfo(weatherData.daily.weather_code[index] || 0).icon, { size: 28, className:"my-1" })}
                      <div className="text-sm">
-                       <span className="font-bold">{Math.round(weatherData.daily.temperature_2m_max[index])}°</span>
-                       <span className="opacity-70 ml-1">{Math.round(weatherData.daily.temperature_2m_min[index])}°</span>
+                       <span className="font-bold">{Math.round(weatherData.daily.temperature_2m_max[index] || 0)}°</span>
+                       <span className="opacity-70 ml-1">{Math.round(weatherData.daily.temperature_2m_min[index] || 0)}°</span>
                      </div>
                  </div>
              ))}
@@ -240,8 +240,9 @@ const Weather: React.FC = () => {
         e.preventDefault();
         if (!searchInput.trim()) return;
         
-        if (suggestions.length > 0) {
-            handleSuggestionClick(suggestions[0]);
+        const firstSuggestion = suggestions[0];
+        if (firstSuggestion) {
+            handleSuggestionClick(firstSuggestion);
             return;
         }
 

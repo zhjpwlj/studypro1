@@ -2,7 +2,13 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Music as MusicIcon, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, ListMusic, AlertCircle, Loader2 } from 'lucide-react';
 import { LanguageContext } from '../../contexts/LanguageContext';
 
-const playlist = [
+interface Track {
+    title: string;
+    artist: string;
+    url: string;
+}
+
+const playlist: Track[] = [
     { title: 'Lofi Study', artist: 'FASSounds', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_18182442cd.mp3' },
     { title: 'Calm Floating', artist: 'Ashot Danielyan', url: 'https://cdn.pixabay.com/audio/2023/10/03/audio_75a2399992.mp3'},
     { title: 'Ambient Classical', artist: 'penguinmusic', url: 'https://cdn.pixabay.com/audio/2022/08/04/audio_2bbe64571b.mp3'},
@@ -21,7 +27,7 @@ const Music: React.FC = () => {
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement>(null);
-  const currentTrack = playlist[currentTrackIndex];
+  const currentTrack = playlist[currentTrackIndex] || playlist[0] || { title: '', artist: '', url: '' };
 
   useEffect(() => {
     if(audioRef.current) {

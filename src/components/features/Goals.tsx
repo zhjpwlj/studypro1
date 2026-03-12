@@ -18,8 +18,8 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
   const { t, language } = useContext(LanguageContext);
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newIcon, setNewIcon] = useState(ICONS[0]);
-  const [newColor, setNewColor] = useState(COLORS[0]);
+  const [newIcon, setNewIcon] = useState<string>(ICONS[0] || '🎯');
+  const [newColor, setNewColor] = useState<string>(COLORS[0] || '#ef4444');
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
@@ -47,7 +47,7 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
   };
 
   const last7Days = getLast7Days();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0] || '';
 
   const toggleHabitForToday = (goal: Goal): void => {
       // Logic for toggling today specifically. 
@@ -138,7 +138,7 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
                           
                           <div className="flex items-center gap-2">
                               {last7Days.map((date, i) => {
-                                  const dStr = date.toISOString().split('T')[0];
+                                  const dStr = date.toISOString().split('T')[0] || '';
                                   const isDone = isCompletedOn(goal, dStr);
                                   
                                   return (

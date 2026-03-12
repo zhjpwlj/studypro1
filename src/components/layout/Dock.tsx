@@ -121,32 +121,32 @@ const folderVariants = {
   exit: { opacity: 0, y: 20, scale: 0.9 },
 };
 
-export default function Dock({ openWindows, onLaunch, onFocus, onToggleLaunchpad }: DockProps) {
+export default function Dock({ openWindows, onLaunch, onFocus, onToggleLaunchpad }: DockProps): React.ReactNode {
   const [openFolder, setOpenFolder] = useState<string | null>(null);
   const dockRef = useRef<HTMLElement>(null);
   const mouseX = useMotionValue<number>(Infinity);
   const { t } = useContext(LanguageContext);
   
-  const isOpen = (appId: AppModule) => openWindows.some(w => w.id === appId && !w.isMinimized);
+  const isOpen = (appId: AppModule): boolean => openWindows.some(w => w.id === appId && !w.isMinimized);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       if (dockRef.current && !dockRef.current.contains(event.target as Node)) {
         setOpenFolder(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return (): void => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
   const activeFolder = dockItems.find((i): i is DockFolder => typeof i === 'object' && i.type === 'folder' && i.name === openFolder);
 
-  const handleIconClick = (action: () => void) => {
+  const handleIconClick = (action: () => void): void => {
       setOpenFolder(null);
       action();
   };
 
-  const renderItem = (item: DockItem, index: number, isGhost: boolean) => {
+  const renderItem = (item: DockItem, index: number, isGhost: boolean): React.ReactNode => {
       if (typeof item === 'object' && item.type === 'folder') {
         const isFolderActive = item.apps.some(appId => isOpen(appId));
         const Icon = item.icon;
@@ -204,7 +204,7 @@ export default function Dock({ openWindows, onLaunch, onFocus, onToggleLaunchpad
                 className="mb-6 bg-white/20 dark:bg-black/40 backdrop-blur-2xl p-4 rounded-3xl border border-white/20 shadow-glass grid grid-cols-4 gap-4 origin-bottom"
             >
                 {activeFolder.apps.map((appId) => {
-                const Icon = appIcons[appId];
+                const Icon = (appIcons[appId] || ((): React.ReactNode => null)) as React.ElementType;
                 return (
                     <button 
                         key={appId} 

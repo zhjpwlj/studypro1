@@ -184,7 +184,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
             <div className="pt-4 first:pt-0">
               <h4 className="font-semibold mb-3">{t('accentColor')}</h4>
               <div className="flex flex-wrap gap-4 items-center">
-                  {accentColors.map(color => (
+                  {accentColors.map((color: { name: string; hex: string }) => (
                     <button key={color.name} onClick={() => onSetAccentColor(color.hex)} className="w-8 h-8 rounded-full transition-transform transform hover:scale-110 flex items-center justify-center" style={{ backgroundColor: color.hex }}>
                       {accentColor === color.hex && <Check size={16} className="text-white" />}
                     </button>
@@ -198,12 +198,12 @@ const Settings: React.FC<SettingsProps> = (props) => {
             <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-white">{t('wallpaperTitle')}</h3>
             <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700/50">
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {wallpaperCategories.map(cat => (
+                  {wallpaperCategories.map((cat: string) => (
                       <button key={cat} onClick={() => setActiveWallpaperCategory(cat)} className={`px-3 py-1.5 rounded-lg text-sm font-medium ${activeWallpaperCategory === cat ? 'bg-accent text-white' : 'bg-gray-100 dark:bg-slate-700'}`}>{cat}</button>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-80 overflow-y-auto pr-2">
-                    {wallpapers.filter(w => w.category === activeWallpaperCategory).map(wp => (
+                    {wallpapers.filter((w: { category: string }) => w.category === activeWallpaperCategory).map((wp: { id: string; lightUrl: string; darkUrl: string }) => (
                         <button key={wp.id} onClick={() => onSetWallpaper(wp.id)} className={`aspect-video rounded-lg overflow-hidden border-2 transition-colors relative group ${wallpaper === wp.id ? 'border-accent' : 'border-transparent hover:border-gray-400'}`}>
                             <img src={isDarkMode ? wp.darkUrl : wp.lightUrl} alt={wp.id} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             {wallpaper === wp.id && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><Check size={24} className="text-white"/></div>}
