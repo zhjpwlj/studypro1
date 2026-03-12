@@ -3,10 +3,22 @@ import { useState, useCallback, useRef } from 'react';
 import { AppModule, WindowConfig } from '../types';
 import { usePersistentState } from './usePersistentState';
 
+const getMenuBarHeight = (): number => {
+  if (typeof document === 'undefined') return 32;
+  const dummy = document.createElement('div');
+  dummy.style.height = 'var(--menubar-height)';
+  dummy.style.position = 'absolute';
+  dummy.style.visibility = 'hidden';
+  document.body.appendChild(dummy);
+  const height = dummy.clientHeight;
+  document.body.removeChild(dummy);
+  return height || 32;
+};
+
 const getDefaultWindowSize = (appId: AppModule): { width: number; height: number } => {
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
-  const MENUBAR_HEIGHT = 28;
+  const MENUBAR_HEIGHT = getMenuBarHeight();
   const DOCK_HEIGHT = 64;
   const availableHeight = screenHeight - MENUBAR_HEIGHT - DOCK_HEIGHT;
   const availableWidth = screenWidth;
@@ -101,7 +113,7 @@ export const useWindowManager = (): {
       }
       
       const { width, height } = getDefaultWindowSize(appId);
-      const MENUBAR_HEIGHT = 28;
+      const MENUBAR_HEIGHT = getMenuBarHeight();
       const DOCK_HEIGHT = 64;
       const availableHeight = window.innerHeight - MENUBAR_HEIGHT - DOCK_HEIGHT;
       const availableWidth = window.innerWidth;
@@ -163,7 +175,7 @@ export const useWindowManager = (): {
     const count = visibleWindows.length;
     if (count === 0) return;
 
-    const MENUBAR_HEIGHT = 28;
+    const MENUBAR_HEIGHT = getMenuBarHeight();
     const DOCK_HEIGHT = 64;
     const availableHeight = window.innerHeight - MENUBAR_HEIGHT - DOCK_HEIGHT;
     const availableWidth = window.innerWidth;

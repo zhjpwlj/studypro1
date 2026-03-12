@@ -15,7 +15,19 @@ interface WindowProps {
 
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-const MENUBAR_HEIGHT = 32;
+const getMenuBarHeight = (): number => {
+  if (typeof document === 'undefined') return 32;
+  const dummy = document.createElement('div');
+  dummy.style.height = 'var(--menubar-height)';
+  dummy.style.position = 'absolute';
+  dummy.style.visibility = 'hidden';
+  document.body.appendChild(dummy);
+  const height = dummy.clientHeight;
+  document.body.removeChild(dummy);
+  return height || 32;
+};
+
+// We will use a ref or state to store the actual menubar height if needed, but for now let's just use 32 as a base.
 const DOCK_HEIGHT = 90; // Adjusted for new dock
 
 const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, onToggleMaximize, onFocus, onUpdate }) => {
@@ -30,13 +42,13 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
   
   const { t } = useContext(LanguageContext);
 
-  const getTitle = (id: AppModule) => {
+  const getTitle = (id: AppModule): string => {
     return t(id.toLowerCase() as keyof typeof import('../../utils/translations')['translations']['en']) || 'Application';
   };
 
   useEffect(() => {
     const timeout = setTimeout(() => setIsMounted(true), 10);
-    return () => clearTimeout(timeout);
+    return (): void => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -48,7 +60,7 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
     }
   }, [config.isMinimized, config.id, config.y]);
 
-  const getEventCoords = (e: MouseEvent | TouchEvent) => 'touches' in e ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+  const getEventCoords = (e: MouseEvent | TouchEvent): { x: number; y: number } => 'touches' in e ? { x: e.touches[0]?.clientX || 0, y: e.touches[0]?.clientY || 0 } : { x: e.clientX, y: e.clientY };
 
   const handleStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, action: 'drag' | { type: 'resize', direction: ResizeDirection }) => {
     if ('button' in e && e.button !== 0) return;
@@ -79,7 +91,8 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
       const newY = windowStartRect.current.y + dy;
       const titleBarHeight = 32;
       const clampedX = Math.max(-config.width + 50, Math.min(newX, window.innerWidth - 50));
-      const clampedY = Math.max(MENUBAR_HEIGHT, Math.min(newY, window.innerHeight - DOCK_HEIGHT - titleBarHeight));
+      const currentMenuBarHeight = getMenuBarHeight();
+      const clampedY = Math.max(currentMenuBarHeight, Math.min(newY, window.innerHeight - DOCK_HEIGHT - titleBarHeight));
       onUpdate({ x: clampedX, y: clampedY });
     }
     
@@ -93,9 +106,10 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
         width = Math.max(300, width);
         height = Math.max(200, height);
 
-        if (y < MENUBAR_HEIGHT) {
-            const overflow = MENUBAR_HEIGHT - y;
-            y = MENUBAR_HEIGHT;
+        const currentMenuBarHeight = getMenuBarHeight();
+        if (y < currentMenuBarHeight) {
+            const overflow = currentMenuBarHeight - y;
+            y = currentMenuBarHeight;
             height -= overflow;
         }
         if (y + height > window.innerHeight - DOCK_HEIGHT) {
@@ -118,7 +132,7 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
         document.addEventListener('touchmove', handleMove, { passive: false });
         document.addEventListener('touchend', handleEnd, { once: true });
     }
-    return () => {
+    return (): void => {
       document.removeEventListener('mousemove', handleMove);
       document.removeEventListener('mouseup', handleEnd);
       document.removeEventListener('touchmove', handleMove);
@@ -149,10 +163,11 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
   };
   
   if (config.isMaximized) {
-    dynamicStyles.top = MENUBAR_HEIGHT + 10;
+    const currentMenuBarHeight = getMenuBarHeight();
+    dynamicStyles.top = currentMenuBarHeight + 10;
     dynamicStyles.left = 10;
     dynamicStyles.width = 'calc(100% - 20px)';
-    dynamicStyles.height = `calc(100vh - ${MENUBAR_HEIGHT}px - ${DOCK_HEIGHT + 20}px)`;
+    dynamicStyles.height = `calc(100vh - ${currentMenuBarHeight}px - ${DOCK_HEIGHT + 20}px)`;
     dynamicStyles.borderRadius = 'var(--window-border-radius)';
   }
 
@@ -177,10 +192,10 @@ const Window: React.FC<WindowProps> = ({ children, config, onClose, onMinimize, 
         onDoubleClick={onToggleMaximize}
         style={{ cursor: isDragging ? 'grabbing' : (config.isMaximized ? 'default' : 'grab') }}
       >
-        <div className="flex items-center gap-3 group">
-          <button onMouseDown={(e) => e.stopPropagation()} onClick={onClose} className="w-5 h-5 bg-[#ff5f56] rounded-full border border-[#e0443e] flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity"><span className="opacity-0 group-hover:opacity-100 text-xs font-bold text-black/50">x</span></button>
-          <button onMouseDown={(e) => e.stopPropagation()} onClick={onMinimize} className="w-5 h-5 bg-[#ffbd2e] rounded-full border border-[#dea123] flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity"><span className="opacity-0 group-hover:opacity-100 text-xs font-bold text-black/50">-</span></button>
-          <button onMouseDown={(e) => e.stopPropagation()} onClick={onToggleMaximize} className="w-5 h-5 bg-[#27c93f] rounded-full border border-[#1aab29] flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity"><span className="opacity-0 group-hover:opacity-100 text-xs font-bold text-black/50">+</span></button>
+        <div className="flex items-center gap-2 group">
+          <button onMouseDown={(e) => e.stopPropagation()} onClick={onClose} className="w-3 h-3 bg-[#ff5f56] rounded-full border border-[#e0443e] flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity"><span className="opacity-0 group-hover:opacity-100 text-[8px] font-bold text-black/50 leading-none">x</span></button>
+          <button onMouseDown={(e) => e.stopPropagation()} onClick={onMinimize} className="w-3 h-3 bg-[#ffbd2e] rounded-full border border-[#dea123] flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity"><span className="opacity-0 group-hover:opacity-100 text-[8px] font-bold text-black/50 leading-none">-</span></button>
+          <button onMouseDown={(e) => e.stopPropagation()} onClick={onToggleMaximize} className="w-3 h-3 bg-[#27c93f] rounded-full border border-[#1aab29] flex items-center justify-center group-hover:opacity-100 opacity-80 transition-opacity"><span className="opacity-0 group-hover:opacity-100 text-[8px] font-bold text-black/50 leading-none">+</span></button>
         </div>
         <span className="text-sm font-medium text-slate-800 dark:text-slate-200 select-none opacity-80 text-shadow-sm">{getTitle(config.id)}</span>
         <div className="w-12"></div>

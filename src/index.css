@@ -4,7 +4,7 @@
   :root {
     --window-border-radius: 16px;
     --dock-height: 80px;
-    --menubar-height: 32px;
+    --menubar-height: max(calc(32px + env(safe-area-inset-top, 0px)), env(titlebar-area-height, 32px));
     --accent-color: #4f46e5;
     --accent-color-hover: #4338ca;
   }

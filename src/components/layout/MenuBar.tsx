@@ -20,7 +20,7 @@ interface MenuBarProps {
   onFocusWindow: (appId: AppModule) => void;
 }
 
-const getTitle = (id: AppModule, t: (key: keyof typeof translations['en']) => string) => {
+const getTitle = (id: AppModule, t: (key: keyof typeof translations['en']) => string): string => {
   return t(id.toLowerCase() as keyof typeof translations['en']);
 };
 
@@ -43,29 +43,51 @@ const MenuBar: React.FC<MenuBarProps> = (props) => {
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
         if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
             setOpenMenu(null);
         }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
+    return (): void => {
         clearInterval(timer);
         document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  const handleMenuClick = (menu: string) => {
+  const handleMenuClick = (menu: string): void => {
     setOpenMenu(openMenu === menu ? null : menu);
   };
   
-  const handleItemClick = (action?: () => void) => {
+  const handleItemClick = (action?: () => void): void => {
       action?.();
       setOpenMenu(null);
   }
 
-  const formatTime = (date: Date) => date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  const formatDate = (date: Date) => date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  const formatTime = (date: Date): string => date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const formatDate = (date: Date): string => date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = (): void => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return (): void => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = (): void => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
 
   const { isDarkMode, onToggleDarkMode, onNewTask, onOpenPreferences, onCloseWindow, onMinimizeWindow, onToggleMaximize, onCloseAll, onTileWindows, windows, activeWindowId, onFocusWindow } = props;
   const hasActiveWindow = !!activeWindowId;
@@ -83,6 +105,7 @@ const MenuBar: React.FC<MenuBarProps> = (props) => {
       [t('edit')]: [ { label: t('undo'), disabled: true }, { label: t('redo'), disabled: true }, { label: t('copy'), disabled: true } ],
       [t('view')]: [
           { label: t('toggleDarkMode'), action: onToggleDarkMode, shortcut: '⌘T' },
+          { label: isFullscreen ? t('exitFullscreen' as keyof typeof import('../../utils/translations')['translations']['en']) || 'Exit Fullscreen' : t('enterFullscreen' as keyof typeof import('../../utils/translations')['translations']['en']) || 'Enter Fullscreen', action: toggleFullscreen, shortcut: '⌃⌘F' },
       ],
       [t('window')]: [
           { label: t('minimize'), action: onMinimizeWindow, disabled: !hasActiveWindow, shortcut: '⌘M' },
@@ -90,13 +113,13 @@ const MenuBar: React.FC<MenuBarProps> = (props) => {
           { label: t('tileWindows'), action: onTileWindows, disabled: windows.length === 0 },
           { label: t('close'), action: onCloseWindow, disabled: !hasActiveWindow, shortcut: '⌘W' },
           'divider',
-          ...windows.map(w => ({ label: getTitle(w.id, t), action: () => onFocusWindow(w.id), checked: w.id === activeWindowId })),
+          ...windows.map(w => ({ label: getTitle(w.id, t), action: (): void => onFocusWindow(w.id), checked: w.id === activeWindowId })),
       ],
   };
 
   return (
-    <header ref={menuRef} className="fixed top-0 left-0 right-0 h-[var(--menubar-height)] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm z-[9999] flex items-center justify-between px-4 text-sm text-slate-800 dark:text-slate-100 select-none">
-      <div className="flex items-center gap-1">
+    <header ref={menuRef} className="fixed top-0 left-0 right-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm z-[9999] flex items-center justify-between px-4 text-sm text-slate-800 dark:text-slate-100 select-none" style={{ height: 'var(--menubar-height)', paddingTop: 'env(safe-area-inset-top, 0px)', paddingLeft: 'max(1rem, env(titlebar-area-x, 0px))', paddingRight: 'max(1rem, calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)))', WebkitAppRegion: 'drag' } as React.CSSProperties}>
+      <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <div className="mr-3 w-5 h-5 bg-gradient-to-br from-[var(--accent-color)] to-purple-600 rounded-md flex items-center justify-center text-white text-[10px] font-bold shadow-sm">S</div>
         {Object.entries(menus).map(([menuName, items]) => (
             <div key={menuName} className="relative">
@@ -127,7 +150,7 @@ const MenuBar: React.FC<MenuBarProps> = (props) => {
         ))}
       </div>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <Wifi size={14} className="opacity-80"/>
         <button 
           onClick={onToggleDarkMode}
