@@ -219,12 +219,12 @@ const CalendarView: React.FC<Pick<CalendarProps, 'events' | 'tasks' | 'classes' 
         setIsProcessing(true);
         try {
             const result = await parseEventFromText(quickAddText);
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = new Date().toISOString().split('T')[0] || new Date().toISOString().substring(0, 10);
             const eventDate = result.date || todayStr;
             
             onAddEvent({
                 title: result.title || quickAddText,
-                date: eventDate,
+                date: eventDate as string,
                 startTime: result.startTime,
                 endTime: result.endTime,
                 color: '#3b82f6', // Default blue

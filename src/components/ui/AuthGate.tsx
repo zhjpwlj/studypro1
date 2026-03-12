@@ -4,7 +4,7 @@ import { getSession, onAuthStateChange, restoreData, signOut } from '../../servi
 const App = lazy(() => import('../../App'));
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
-import { wallpapers } from '../../config/theme';
+import { wallpapers } from '../../config/theme.ts';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { User } from '@supabase/supabase-js';
 
@@ -28,7 +28,7 @@ const AuthGate: React.FC = () => {
     const [wallpaper] = usePersistentState<string>('focusflow-theme-wallpaper', 'deep_space');
     const [isDarkMode] = usePersistentState<boolean>('focusflow-theme-dark', () => window.matchMedia('(prefers-color-scheme: dark)').matches);
     
-    const currentWallpaper = wallpapers.find(w => w.id === wallpaper) || wallpapers.find(w => w.id === 'deep_space') || wallpapers[0];
+    const currentWallpaper = wallpapers.find((w: { id: string; lightUrl: string; darkUrl: string; category: string }) => w.id === wallpaper) || wallpapers.find((w: { id: string; lightUrl: string; darkUrl: string; category: string }) => w.id === 'deep_space') || wallpapers[0] || { id: '', lightUrl: '', darkUrl: '', category: '' };
     
     useEffect(() => {
         document.documentElement.classList.toggle('dark', isDarkMode);
@@ -108,13 +108,14 @@ const AuthGate: React.FC = () => {
                 const { data, error } = await restoreData(currentUser);
                 if (error) {
                     console.error("Failed to fetch initial data", error);
-                    if (error.message?.includes('User not authenticated') || error.message?.includes('JWT') || error.message?.includes('invalid')) {
+                    const err = error as { message?: string };
+                    if (err.message?.includes('User not authenticated') || err.message?.includes('JWT') || err.message?.includes('invalid')) {
                         await signOut();
                         setSession(null);
                         setUser(null);
                     }
                 } else if (data) {
-                    handleRestoreData(data);
+                    handleRestoreData(data as Record<string, unknown>);
                 }
             } catch (err) {
                 console.error("Data restore error:", err);
@@ -123,8 +124,8 @@ const AuthGate: React.FC = () => {
 
         handleAuth();
 
-        const authListener = onAuthStateChange(async (newSession) => {
-            setSession(newSession);
+        const authListener = onAuthStateChange(async (newSession: Session | null) => {
+            setSession(newSession ? { user: newSession.user, access_token: newSession.access_token } : null);
             setUser(newSession?.user || null);
             setLoading(false);
             if (newSession) {

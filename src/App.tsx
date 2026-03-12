@@ -26,7 +26,7 @@ const Launchpad = lazy(() => import('./components/features/Launchpad'));
 
 import { AppModule, WindowConfig, Language } from './types';
 import { usePersistentState } from './hooks/usePersistentState';
-import { wallpapers, accentColors } from './config/theme';
+import { wallpapers, accentColors } from './config/theme.ts';
 import { backupData } from './services/supabaseService';
 import { translations } from './utils/translations';
 import { LanguageContext } from './contexts/LanguageContext';
@@ -34,6 +34,7 @@ import { User } from '@supabase/supabase-js';
 
 import { useWindowManager } from './hooks/useWindowManager';
 import { useAppData } from './hooks/useAppData';
+import { useAppActions } from './hooks/useAppActions';
 
 interface AppProps {
   user: User;
@@ -64,7 +65,7 @@ const App: React.FC<AppProps> = ({ user, onRestoreData }) => {
   } = useAppData();
 
   const [isDarkMode, setIsDarkMode] = usePersistentState<boolean>('focusflow-theme-dark', true);
-  const [accentColor, setAccentColor] = usePersistentState<string>('focusflow-theme-accent', accentColors[0].hex);
+  const [accentColor, setAccentColor] = usePersistentState<string>('focusflow-theme-accent', accentColors[0]?.hex || '#ef4444');
   const [wallpaper, setWallpaper] = usePersistentState<string>('focusflow-theme-wallpaper', 'deep_space');
   const [language, setLanguage] = usePersistentState<Language>('focusflow-language', 'en');
 
@@ -84,7 +85,7 @@ const App: React.FC<AppProps> = ({ user, onRestoreData }) => {
   });
 
   const updateWindowState = useCallback((appId: AppModule, updates: Partial<WindowConfig>): void => {
-    setWindows(prev => prev.map(w => w.id === appId ? { ...w, ...updates } : w));
+    setWindows((prev: WindowConfig[]) => prev.map((w: WindowConfig) => w.id === appId ? { ...w, ...updates } : w));
   }, [setWindows]);
 
   useEffect((): void => {
@@ -120,12 +121,12 @@ const App: React.FC<AppProps> = ({ user, onRestoreData }) => {
   }, [isDarkMode]);
 
   useEffect((): void => {
-    const selectedColor = accentColors.find(c => c.hex === accentColor) || { hex: accentColor, hoverHex: accentColor };
+    const selectedColor = accentColors.find((c: { hex: string; hoverHex: string }) => c.hex === accentColor) || { hex: accentColor, hoverHex: accentColor };
     document.documentElement.style.setProperty('--accent-color', selectedColor.hex);
     document.documentElement.style.setProperty('--accent-color-hover', selectedColor.hoverHex);
   }, [accentColor]);
 
-  const currentWallpaper = useMemo(() => wallpapers.find(w => w.id === wallpaper) || wallpapers[0], [wallpaper]);
+  const currentWallpaper = useMemo(() => wallpapers.find((w: { id: string; lightUrl: string; darkUrl: string; category: string }) => w.id === wallpaper) || wallpapers[0] || { id: '', lightUrl: '', darkUrl: '', category: '' }, [wallpaper]);
   const isLiveWallpaper = wallpaper.startsWith('live:');
   const liveVideoId = isLiveWallpaper ? wallpaper.split(':')[1] : null;
 
@@ -173,7 +174,7 @@ const App: React.FC<AppProps> = ({ user, onRestoreData }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
         </div>
       }>
-        {(() => {
+        {((): React.ReactNode => {
           const render = (): React.ReactNode => {
             switch (appId) {
               case AppModule.DASHBOARD: return <Dashboard tasks={tasks} projects={projects} setProjects={setProjects} timeEntries={timeEntries} events={events} classes={classes} goals={goals} />;

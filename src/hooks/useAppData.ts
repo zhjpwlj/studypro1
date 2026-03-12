@@ -6,7 +6,7 @@ import { usePersistentState } from './usePersistentState';
 const getTomorrow = (): string => {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
+  return d.toISOString().split('T')[0] || '';
 };
 
 export const useAppData = (): {
@@ -40,9 +40,8 @@ export const useAppData = (): {
         id: 'task-1', 
         title: 'Welcome to StudyPro OS!', 
         completed: false, 
-        project: 'General', 
-        priority: 'high', 
-        createdAt: Date.now(), 
+        projectId: 'General', 
+        priority: 1, 
         status: 'todo',
         deadline: getTomorrow(),
         tags: ['studypro'], 
@@ -58,9 +57,9 @@ export const useAppData = (): {
   ]);
   
   useEffect(() => {
-      setTasks(prev => prev.map(t => ({
+      setTasks((prev: Task[]) => prev.map((t: Task) => ({
           ...t,
-          status: t.status || (t.completed ? 'done' : 'todo'),
+          status: (t.status || (t.completed ? 'done' : 'todo')) as TaskStatus,
           inMyDay: t.inMyDay !== undefined ? t.inMyDay : false,
       })));
   }, [setTasks]);

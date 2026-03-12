@@ -17,7 +17,7 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, onAddClass, onDe
   const [name, setName] = useState('');
   const [instructor, setInstructor] = useState('');
   const [location, setLocation] = useState('');
-  const [color, setColor] = useState(COLORS[0]);
+  const [color, setColor] = useState(COLORS[0] || '#ef4444');
   const [sessions, setSessions] = useState<ClassSession[]>([]);
 
   // Temporary session state for the form
@@ -42,7 +42,7 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, onAddClass, onDe
       name,
       instructor,
       location,
-      color,
+      color: color || COLORS[0] || '#ef4444',
       sessions: sessions.length > 0 ? sessions : [{ dayOfWeek: tempDay, startTime: tempStart, endTime: tempEnd }]
     };
 
@@ -56,7 +56,7 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, onAddClass, onDe
     setInstructor('');
     setLocation('');
     setSessions([]);
-    setColor(COLORS[0]);
+    setColor(COLORS[0] || '#ef4444');
   };
 
   // Sort classes by day and time for the list view

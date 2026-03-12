@@ -97,12 +97,12 @@ export const useAppActions = ({
   }, [setGoals]);
   
   const handleToggleGoal = useCallback((id: string): void => {
-    const today = new Date().toISOString().split('T')[0];
-    setGoals(prev => prev.map((g: Goal) => {
+    const today = new Date().toISOString().split('T')[0] || '';
+    setGoals((prev: Goal[]) => prev.map((g: Goal) => {
         if (g.id === id) {
             const completedToday = g.completedDates.includes(today);
             const newCompletedDates = completedToday 
-                ? g.completedDates.filter(d => d !== today)
+                ? g.completedDates.filter((d: string) => d !== today)
                 : [...g.completedDates, today];
             
             return {
@@ -210,7 +210,7 @@ export const useAppActions = ({
       }
       case 'addEvent': {
         const title = typeof args.title === 'string' ? args.title : 'New Event';
-        const date = typeof args.date === 'string' ? args.date : new Date().toISOString().split('T')[0];
+        const date = typeof args.date === 'string' ? args.date : (new Date().toISOString().split('T')[0] || '');
         const startTime = typeof args.startTime === 'string' ? args.startTime : undefined;
         const endTime = typeof args.endTime === 'string' ? args.endTime : undefined;
 
@@ -219,7 +219,7 @@ export const useAppActions = ({
           date,
           startTime,
           endTime,
-          color: accentColors[Math.floor(Math.random() * accentColors.length)].hex,
+          color: accentColors[Math.floor(Math.random() * accentColors.length)]?.hex || '#3b82f6',
         };
         handleAddEvent(newEvent);
         break;
@@ -241,7 +241,7 @@ export const useAppActions = ({
       case 'addGoal': {
         const title = typeof args.title === 'string' ? args.title : 'New Goal';
         const icon = typeof args.icon === 'string' ? args.icon : '🎯';
-        const color = typeof args.color === 'string' ? args.color : accentColors[Math.floor(Math.random() * accentColors.length)].hex;
+        const color = typeof args.color === 'string' ? args.color : (accentColors[Math.floor(Math.random() * accentColors.length)]?.hex || '#3b82f6');
         const newGoal: Omit<Goal, 'id'> = {
           title,
           icon,
@@ -258,14 +258,16 @@ export const useAppActions = ({
         const front = typeof args.front === 'string' ? args.front : '';
         const back = typeof args.back === 'string' ? args.back : '';
 
-        let deck = decks.find(d => d.title.toLowerCase().includes(deckTitle.toLowerCase()));
+        let deck = decks.find((d: Deck) => d.title.toLowerCase().includes(deckTitle.toLowerCase()));
         if (!deck) {
           const newDeckId = `deck-${Date.now()}`;
           const newDeck: Deck = { id: newDeckId, title: deckTitle, cards: [] };
-          setDecks(prev => [...prev, newDeck]);
+          setDecks((prev: Deck[]) => [...prev, newDeck]);
           deck = newDeck;
         }
-        handleAddCard(deck.id, front, back);
+        if (deck) {
+          handleAddCard(deck.id, front, back);
+        }
         break;
       }
       default:

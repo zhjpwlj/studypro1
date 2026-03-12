@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Check, Star, PawPrint, Film, Coffee, Building, Mountain, WandSparkles, PlayCircle, Youtube } from 'lucide-react';
-import { wallpapers, wallpaperCategories, accentColors, liveWallpapers } from '../../config/theme';
+import { wallpapers, wallpaperCategories, accentColors, liveWallpapers } from '../../config/theme.ts';
 
 interface ThemeProps {
   isDarkMode: boolean;
@@ -36,7 +36,7 @@ const Theme: React.FC<ThemeProps> = ({ isDarkMode, accentColor, onSetAccentColor
   const getYouTubeId = (url: string): string | null => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
+    return (match && match[2] && match[2].length === 11) ? match[2] : null;
   };
 
   const handleCustomVideoSubmit = (e: React.FormEvent): void => {

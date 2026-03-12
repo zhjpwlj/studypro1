@@ -54,7 +54,7 @@ const ChatView: React.FC<ChatViewProps> = ({ t, onAiAction }) => {
 
       for await (const chunk of stream) {
         if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-          functionCall = chunk.functionCalls[0];
+          functionCall = (chunk.functionCalls[0] as FunctionCall) || null;
           break; // Stop processing this stream, wait for confirmation
         }
         const chunkText = (chunk as GenerateContentResponse).text;
