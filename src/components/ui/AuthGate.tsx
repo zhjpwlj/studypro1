@@ -4,7 +4,7 @@ import { getSession, onAuthStateChange, restoreData, signOut } from '../../servi
 const App = lazy(() => import('../../App'));
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
-import { wallpapers } from '../../config/theme';
+import { wallpapers, Wallpaper } from '../../config/theme';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { User, Session } from '@supabase/supabase-js';
 
@@ -28,7 +28,7 @@ const AuthGate: React.FC = () => {
     const [wallpaper] = usePersistentState<string>('focusflow-theme-wallpaper', 'deep_space');
     const [isDarkMode] = usePersistentState<boolean>('focusflow-theme-dark', () => window.matchMedia('(prefers-color-scheme: dark)').matches);
     
-    const currentWallpaper = wallpapers.find((w: { id: string; lightUrl: string; darkUrl: string; category: string }) => w.id === wallpaper) || wallpapers.find((w: { id: string; lightUrl: string; darkUrl: string; category: string }) => w.id === 'deep_space') || wallpapers[0] || { id: '', lightUrl: '', darkUrl: '', category: '' };
+    const currentWallpaper = wallpapers.find((w: Wallpaper) => w.id === wallpaper) || wallpapers.find((w: Wallpaper) => w.id === 'deep_space') || wallpapers[0] || { id: '', lightUrl: '', darkUrl: '', category: '' };
     
     useEffect(() => {
         document.documentElement.classList.toggle('dark', isDarkMode);

@@ -5,7 +5,7 @@ import { backupData, restoreData, getLastSyncTime, signOut } from '../../service
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { LanguageContext } from '../../contexts/LanguageContext';
 import { Language } from '../../types';
-import { wallpapers, wallpaperCategories, accentColors } from '../../config/theme';
+import { wallpapers, wallpaperCategories, accentColors, Wallpaper, AccentColor } from '../../config/theme';
 import { User } from '@supabase/supabase-js';
 
 interface SettingsProps {
@@ -184,7 +184,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
             <div className="pt-4 first:pt-0">
               <h4 className="font-semibold mb-3">{t('accentColor')}</h4>
               <div className="flex flex-wrap gap-4 items-center">
-                  {accentColors.map((color: { name: string; hex: string }) => (
+                  {accentColors.map((color: AccentColor) => (
                     <button key={color.name} onClick={() => onSetAccentColor(color.hex)} className="w-8 h-8 rounded-full transition-transform transform hover:scale-110 flex items-center justify-center" style={{ backgroundColor: color.hex }}>
                       {accentColor === color.hex && <Check size={16} className="text-white" />}
                     </button>
@@ -203,7 +203,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                   ))}
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-80 overflow-y-auto pr-2">
-                    {wallpapers.filter((w: { category: string }) => w.category === activeWallpaperCategory).map((wp: { id: string; lightUrl: string; darkUrl: string }) => (
+                    {wallpapers.filter((w: Wallpaper) => w.category === activeWallpaperCategory).map((wp: Wallpaper) => (
                         <button key={wp.id} onClick={() => onSetWallpaper(wp.id)} className={`aspect-video rounded-lg overflow-hidden border-2 transition-colors relative group ${wallpaper === wp.id ? 'border-accent' : 'border-transparent hover:border-gray-400'}`}>
                             <img src={isDarkMode ? wp.darkUrl : wp.lightUrl} alt={wp.id} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             {wallpaper === wp.id && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><Check size={24} className="text-white"/></div>}

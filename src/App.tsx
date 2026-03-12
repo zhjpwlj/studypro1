@@ -26,7 +26,7 @@ const Launchpad = lazy(() => import('./components/features/Launchpad'));
 
 import { AppModule, WindowConfig, Language } from './types';
 import { usePersistentState } from './hooks/usePersistentState';
-import { wallpapers, accentColors } from './config/theme';
+import { wallpapers, accentColors, Wallpaper, AccentColor } from './config/theme';
 import { backupData } from './services/supabaseService';
 import { translations } from './utils/translations';
 import { LanguageContext } from './contexts/LanguageContext';
@@ -121,12 +121,12 @@ const App: React.FC<AppProps> = ({ user, onRestoreData }) => {
   }, [isDarkMode]);
 
   useEffect((): void => {
-    const selectedColor = accentColors.find((c: { hex: string; hoverHex: string }) => c.hex === accentColor) || { hex: accentColor, hoverHex: accentColor };
+    const selectedColor = accentColors.find((c: AccentColor) => c.hex === accentColor) || { hex: accentColor, hoverHex: accentColor };
     document.documentElement.style.setProperty('--accent-color', selectedColor.hex);
     document.documentElement.style.setProperty('--accent-color-hover', selectedColor.hoverHex);
   }, [accentColor]);
 
-  const currentWallpaper = useMemo(() => wallpapers.find((w: { id: string; lightUrl: string; darkUrl: string; category: string }) => w.id === wallpaper) || wallpapers[0] || { id: '', lightUrl: '', darkUrl: '', category: '' }, [wallpaper]);
+  const currentWallpaper = useMemo(() => wallpapers.find((w: Wallpaper) => w.id === wallpaper) || wallpapers[0] || { id: '', lightUrl: '', darkUrl: '', category: '' }, [wallpaper]);
   const isLiveWallpaper = wallpaper.startsWith('live:');
   const liveVideoId = isLiveWallpaper ? wallpaper.split(':')[1] : null;
 

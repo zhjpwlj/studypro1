@@ -40,7 +40,7 @@ const FocusTimer: React.FC = () => {
         audio.src = sounds[activeSound];
         audio.play().catch(e => console.error("Audio play failed:", e));
     }
-    return () => { audio.pause(); };
+    return (): void => { audio.pause(); };
   }, [activeSound, sounds]);
 
   const toggleTimer = (): void => setIsActive(!isActive);

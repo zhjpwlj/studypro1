@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Check, Star, PawPrint, Film, Coffee, Building, Mountain, WandSparkles, PlayCircle, Youtube } from 'lucide-react';
-import { wallpapers, wallpaperCategories, accentColors, liveWallpapers } from '../../config/theme';
+import { wallpapers, wallpaperCategories, accentColors, liveWallpapers, Wallpaper, LiveWallpaper, AccentColor } from '../../config/theme';
 
 interface ThemeProps {
   isDarkMode: boolean;
@@ -50,7 +50,7 @@ const Theme: React.FC<ThemeProps> = ({ isDarkMode, accentColor, onSetAccentColor
     }
   };
 
-  const filteredWallpapers = wallpapers.filter(wp => wp.category === activeCategory);
+  const filteredWallpapers = wallpapers.filter((wp: Wallpaper) => wp.category === activeCategory);
 
   return (
     <div className="h-full flex flex-col bg-slate-900/80 text-white backdrop-blur-lg">
@@ -77,7 +77,7 @@ const Theme: React.FC<ThemeProps> = ({ isDarkMode, accentColor, onSetAccentColor
           {activeTab === 'static' ? (
             <>
               <div className="flex flex-wrap gap-3 mb-6">
-                  {wallpaperCategories.map(cat => {
+                  {wallpaperCategories.map((cat: string) => {
                       const Icon = categoryIcons[cat as keyof typeof categoryIcons] || ImageIcon;
                       return (
                           <button 
@@ -94,7 +94,7 @@ const Theme: React.FC<ThemeProps> = ({ isDarkMode, accentColor, onSetAccentColor
 
               <h3 className="text-lg font-semibold mb-3">{activeCategory}</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredWallpapers.map(wp => (
+                {filteredWallpapers.map((wp: Wallpaper) => (
                   <button
                     key={wp.id}
                     onClick={() => onSetWallpaper(wp.id)}
@@ -131,7 +131,7 @@ const Theme: React.FC<ThemeProps> = ({ isDarkMode, accentColor, onSetAccentColor
                <div>
                   <h3 className="text-lg font-semibold mb-3">Featured Live Scenes</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {liveWallpapers.map(wp => (
+                    {liveWallpapers.map((wp: LiveWallpaper) => (
                       <button
                         key={wp.id}
                         onClick={() => onSetWallpaper(wp.id)}
@@ -159,7 +159,7 @@ const Theme: React.FC<ThemeProps> = ({ isDarkMode, accentColor, onSetAccentColor
           <div className="mt-8 pt-6 border-t border-white/10">
             <h3 className="text-lg font-bold mb-4">Accent Color</h3>
              <div className="flex flex-wrap gap-4 items-center">
-                {accentColors.map(color => (
+                {accentColors.map((color: AccentColor) => (
                   <button
                     key={color.name}
                     onClick={() => {
