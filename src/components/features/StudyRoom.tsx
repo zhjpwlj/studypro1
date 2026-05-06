@@ -9,9 +9,13 @@ interface Desk {
   occupant?: { name: string; status: string; color: string; };
 }
 
-const StudyRoom: React.FC = () => {
+interface StudyRoomProps {
+  isMobile?: boolean;
+}
+
+const StudyRoom: React.FC<StudyRoomProps> = ({ isMobile }) => {
   const { t } = useContext(LanguageContext);
-  const [desks, setDesks] = useState<Desk[]>(Array.from({ length: 20 }, (_, i) => {
+  const [desks, setDesks] = useState<Desk[]>(Array.from({ length: isMobile ? 12 : 20 }, (_, i) => {
       // Mock initial data
       if (i === 2) return { id: i, occupant: { name: 'Sarah', status: 'Reading', color: '#f472b6' } };
       if (i === 5) return { id: i, occupant: { name: 'Mike', status: 'Deep Work', color: '#60a5fa' } };
@@ -41,29 +45,29 @@ const StudyRoom: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col p-4 bg-gradient-to-b from-blue-50 to-orange-50 dark:from-[#0f172a] dark:to-[#1e1b4b] relative overflow-hidden">
+    <div className={`h-full flex flex-col ${isMobile ? 'p-3' : 'p-4'} bg-gradient-to-b from-blue-50 to-orange-50 dark:from-[#0f172a] dark:to-[#1e1b4b] relative overflow-hidden`}>
        {/* Background decorative elements */}
       <div className="absolute top-10 -left-10 w-40 h-40 bg-rose-200/50 dark:bg-rose-500/10 rounded-full blur-2xl"></div>
       <div className="absolute bottom-5 -right-10 w-40 h-40 bg-sky-200/50 dark:bg-sky-500/10 rounded-full blur-2xl"></div>
       
-      <header className="flex justify-between items-center mb-6 flex-shrink-0 z-10">
+      <header className={`flex justify-between items-center ${isMobile ? 'mb-4' : 'mb-6'} flex-shrink-0 z-10`}>
          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Users size={20} className="text-indigo-500"/>
+            <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900 dark:text-white flex items-center gap-2`}>
+                <Users size={isMobile ? 18 : 20} className="text-indigo-500"/>
                 {t('virtualLibrary')}
             </h2>
-            <p className="text-xs text-slate-500">{t('librarySubtitle')}</p>
+            <p className="text-[10px] text-slate-500">{t('librarySubtitle')}</p>
          </div>
          <div className="flex items-center gap-2">
-             <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-bold flex items-center gap-1">
-                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+             <span className={`px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-[10px] font-bold flex items-center gap-1`}>
+                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                  {desks.filter(d => d.occupant).length} {t('online')}
              </span>
          </div>
       </header>
 
       <div className="flex-1 overflow-y-auto pr-2" style={{ perspective: '1000px' }}>
-          <div className="grid grid-cols-4 gap-y-10 gap-x-6 pb-6" style={{ transform: 'rotateX(25deg)', transformOrigin: 'center top' }}>
+          <div className={`grid ${isMobile ? 'grid-cols-2 gap-y-6 gap-x-4' : 'grid-cols-4 gap-y-10 gap-x-6'} pb-6`} style={{ transform: isMobile ? 'rotateX(15deg)' : 'rotateX(25deg)', transformOrigin: 'center top' }}>
               {desks.map((desk) => (
                   <button
                     key={desk.id}
@@ -82,16 +86,16 @@ const StudyRoom: React.FC = () => {
                           {desk.occupant ? (
                               <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
                                   <div 
-                                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base mb-1 shadow-md"
+                                    className={`${isMobile ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-base'} rounded-full flex items-center justify-center text-white font-bold mb-1 shadow-md`}
                                     style={{ backgroundColor: desk.occupant.color }}
                                   >
                                       {desk.occupant.name[0]}
                                   </div>
-                                  <span className="font-bold text-xs text-slate-700 dark:text-slate-200">{desk.occupant.name}</span>
-                                  <span className="text-[9px] bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-full mt-1 text-slate-500">{desk.occupant.status}</span>
+                                  <span className="font-bold text-[10px] text-slate-700 dark:text-slate-200 truncate w-full text-center">{desk.occupant.name}</span>
+                                  <span className="text-[8px] bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded-full mt-1 text-slate-500 truncate w-full text-center">{desk.occupant.status}</span>
                               </div>
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 text-slate-400 font-medium text-xs">
+                            <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? 'opacity-30' : 'opacity-0 group-hover:opacity-100'} text-slate-400 font-medium text-[10px]`}>
                                 {t('sitHere')}
                             </div>
                           )}

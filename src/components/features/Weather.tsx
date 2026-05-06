@@ -118,7 +118,11 @@ interface Location {
     name: string;
 }
 
-const Weather: React.FC = () => {
+interface WeatherProps {
+    isMobile?: boolean;
+}
+
+const Weather: React.FC<WeatherProps> = ({ isMobile }) => {
     const { t } = useContext(LanguageContext);
     const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -270,7 +274,7 @@ const Weather: React.FC = () => {
     };
 
     return (
-        <div className="h-full flex flex-col p-6 bg-gradient-to-b from-blue-400 to-blue-600 dark:from-slate-800 dark:to-slate-950 text-white overflow-hidden">
+        <div className={`h-full flex flex-col bg-gradient-to-b from-blue-400 to-blue-600 dark:from-slate-800 dark:to-slate-950 text-white overflow-hidden ${isMobile ? 'p-4' : 'p-6'}`}>
             <header className="flex-shrink-0 mb-4">
                 <form onSubmit={handleSearch} className="flex gap-2 relative z-50">
                     <div className="relative flex-1">

@@ -24,6 +24,7 @@ export const wallpaperCategories = [
   'Anime',
   'Cafe',
   'Animal',
+  'Dark Mode',
   'Exclusive',
   'Specials'
 ];
@@ -136,6 +137,42 @@ export const wallpapers: Wallpaper[] = [
     category: 'Animal',
     lightUrl: 'https://images.unsplash.com/photo-1564349683136-77e08bef1ed1?auto=format&fit=crop&q=80&w=1920',
     darkUrl: 'https://images.unsplash.com/photo-1527118732049-c88155f2107c?auto=format&fit=crop&q=80&w=1920'
+  },
+  {
+    id: 'abstract_dark',
+    category: 'Dark Mode',
+    lightUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1920',
+    darkUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1920'
+  },
+  {
+    id: 'midnight_forest',
+    category: 'Dark Mode',
+    lightUrl: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&q=80&w=1920',
+    darkUrl: 'https://images.unsplash.com/photo-1440330033336-7dcff4630cef?auto=format&fit=crop&q=80&w=1920'
+  },
+  {
+    id: 'dark_mountain',
+    category: 'Dark Mode',
+    lightUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1920',
+    darkUrl: 'https://images.unsplash.com/photo-1492644447567-60cd045ec0d5?auto=format&fit=crop&q=80&w=1920'
+  },
+  {
+    id: 'minimal_dark',
+    category: 'Dark Mode',
+    lightUrl: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&q=80&w=1920',
+    darkUrl: 'https://images.unsplash.com/photo-1504333638930-c8787321eba0?auto=format&fit=crop&q=80&w=1920'
+  },
+  {
+    id: 'dark_ocean',
+    category: 'Dark Mode',
+    lightUrl: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&q=80&w=1920',
+    darkUrl: 'https://images.unsplash.com/photo-1488188840666-e2308741a62f?auto=format&fit=crop&q=80&w=1920'
+  },
+  {
+    id: 'obsidian_waves',
+    category: 'Dark Mode',
+    lightUrl: 'https://images.unsplash.com/photo-1550684847-75bdda21cc95?auto=format&fit=crop&q=80&w=1920',
+    darkUrl: 'https://images.unsplash.com/photo-1550684848-86a5d8727436?auto=format&fit=crop&q=80&w=1920'
   }
 ];
 

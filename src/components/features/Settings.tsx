@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Database, Cloud, Loader2, User as UserIcon, Globe, Palette, Sun, Moon, Check, Info, Upload, Key } from 'lucide-react';
+import { Database, Cloud, Loader2, User as UserIcon, Globe, Palette, Sun, Moon, Check, Info, Upload, Key, Plus, X, Trash2, Layers, Share2, Github, Calendar as CalendarIcon, HardDrive, Target } from 'lucide-react';
 import { backupData, restoreData, getLastSyncTime, signOut } from '../../services/supabaseService';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { LanguageContext } from '../../contexts/LanguageContext';
@@ -21,11 +21,20 @@ interface SettingsProps {
   onSetAccentColor: (color: string) => void;
   wallpaper: string;
   onSetWallpaper: (wallpaperId: string) => void;
+  projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  isMobile?: boolean;
+  isClassicMode?: boolean;
+  onToggleClassicMode?: () => void;
+  isFocusMode?: boolean;
+  onToggleFocusMode?: () => void;
+  isStageManagerEnabled?: boolean;
+  onToggleStageManager?: () => void;
 }
 
 // Settings component for managing application preferences
 const Settings: React.FC<SettingsProps> = (props) => {
-  const { onExportData, onImportData, onWipeData, getAllData, onRestoreData, user, isDarkMode, onToggleDarkMode, accentColor, onSetAccentColor, wallpaper, onSetWallpaper } = props;
+  const { onExportData, onImportData, onWipeData, getAllData, onRestoreData, user, isDarkMode, onToggleDarkMode, accentColor, onSetAccentColor, wallpaper, onSetWallpaper, projects, setProjects, isMobile, isClassicMode, onToggleClassicMode, isFocusMode, onToggleFocusMode, isStageManagerEnabled, onToggleStageManager } = props;
   const [activeTab, setActiveTab] = useState('general');
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -34,30 +43,45 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
 
-  useEffect(() => {
-    const checkApiKey = async (): Promise<void> => {
-      if (window.aistudio?.hasSelectedApiKey) {
-        try {
-          const hasKey = await window.aistudio.hasSelectedApiKey();
-          setHasApiKey(hasKey);
-        } catch (err) {
-          console.error('Error checking API key:', err);
-        }
-      }
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingProjectName, setEditingProjectName] = useState('');
+  const [editingProjectColor, setEditingProjectColor] = useState('');
+
+  const handleUpdateProject = (id: string): void => {
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, name: editingProjectName, color: editingProjectColor } : p));
+    setEditingProjectId(null);
+  };
+
+  const handleDeleteProject = (id: string): void => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleAddProject = (): void => {
+    const newProject: Project = {
+      id: `proj-${Date.now()}`,
+      name: 'New Project',
+      color: accentColor
     };
-    checkApiKey();
+    setProjects(prev => [...prev, newProject]);
+    setEditingProjectId(newProject.id);
+    setEditingProjectName(newProject.name);
+    setEditingProjectColor(newProject.color);
+  };
+
+  useEffect(() => {
+    setHasApiKey(!!localStorage.getItem('geminiApiKey'));
   }, []);
 
-  const handleOpenSelectKey = async (): Promise<void> => {
-    if (window.aistudio?.openSelectKey) {
-      try {
-        await window.aistudio.openSelectKey();
-        // After opening, we assume success or user interaction
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey);
-      } catch (err) {
-        console.error('Error opening key selector:', err);
-      }
+  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem('geminiApiKey') || '');
+
+  const handleSaveApiKey = (): void => {
+    const key = apiKeyInput.trim();
+    if (key) {
+      localStorage.setItem('geminiApiKey', key);
+      setHasApiKey(true);
+    } else {
+      localStorage.removeItem('geminiApiKey');
+      setHasApiKey(false);
     }
   };
   
@@ -209,6 +233,51 @@ const Settings: React.FC<SettingsProps> = (props) => {
               </div>
               <button onClick={onToggleDarkMode} className="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium">{isDarkMode ? t('dark') : t('light')}</button>
             </div>
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-3">
+                  <Layers size={20}/>
+                  <div>
+                    <h4 className="font-semibold">{t('classicMode')}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('classicModeDesc')}</p>
+                  </div>
+              </div>
+              <button 
+                onClick={onToggleClassicMode} 
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isClassicMode ? 'bg-accent text-white' : 'bg-slate-200 dark:bg-slate-700'}`}
+              >
+                {isClassicMode ? t('enabled') : t('disabled')}
+              </button>
+            </div>
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-3">
+                  <Target size={20}/>
+                  <div>
+                    <h4 className="font-semibold">{t('focusMode')}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('focusModeDesc')}</p>
+                  </div>
+              </div>
+              <button 
+                onClick={onToggleFocusMode} 
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isFocusMode ? 'bg-accent text-white' : 'bg-slate-200 dark:bg-slate-700'}`}
+              >
+                {isFocusMode ? t('enabled') : t('disabled')}
+              </button>
+            </div>
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-3">
+                  <Layers size={20}/>
+                  <div>
+                    <h4 className="font-semibold">{t('stageManager')}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('stageManagerDesc')}</p>
+                  </div>
+              </div>
+              <button 
+                onClick={onToggleStageManager} 
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isStageManagerEnabled ? 'bg-accent text-white' : 'bg-slate-200 dark:bg-slate-700'}`}
+              >
+                {isStageManagerEnabled ? t('enabled') : t('disabled')}
+              </button>
+            </div>
             <div className="pt-4 first:pt-0">
               <h4 className="font-semibold mb-3">{t('accentColor')}</h4>
               <div className="flex flex-wrap gap-4 items-center">
@@ -296,7 +365,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
         <section>
           <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-white">{t('aiConfig')}</h3>
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700/50 space-y-4">
-             <div className="flex items-center justify-between">
+             <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-3">
                     <Key size={20} className={hasApiKey ? "text-emerald-500" : "text-amber-500"} />
                     <div>
@@ -306,28 +375,178 @@ const Settings: React.FC<SettingsProps> = (props) => {
                         </p>
                     </div>
                 </div>
-                <button 
-                  onClick={handleOpenSelectKey} 
-                  className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover flex items-center gap-2"
-                >
-                  <Key size={16} />
-                  {t('getApiKey')}
-                </button>
+                <div className="flex gap-2">
+                  <input 
+                    type="password" 
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="Enter Gemini API Key..."
+                    className="flex-1 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                  />
+                  <button 
+                    onClick={handleSaveApiKey} 
+                    className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover flex items-center gap-2"
+                  >
+                    Save
+                  </button>
+                </div>
              </div>
              <div className="pt-4 border-t border-gray-100 dark:border-slate-700/50">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  To use advanced AI features, you must select a paid API key from a Google Cloud project.
+                  To use advanced AI features, you must enter a valid Gemini API key. It will be stored locally in your browser.
                 </p>
                 <a 
-                  href="https://ai.google.dev/gemini-api/docs/billing" 
+                  href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-xs text-accent hover:underline flex items-center gap-1"
                 >
                   <Info size={12} />
-                  {t('billingDocs')}
+                  Get an API Key
                 </a>
              </div>
+          </div>
+        </section>
+    </div>
+  );
+
+  const renderProjectsTab = (): React.ReactNode => (
+    <div className="space-y-8 animate-fade-in">
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('manageProjects')}</h3>
+            <button 
+              onClick={handleAddProject}
+              className="px-3 py-1.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover flex items-center gap-2"
+            >
+              <Plus size={16} />
+              {t('newEntry')}
+            </button>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700/50 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700/50">
+            {projects.map(project => (
+              <div key={project.id} className="p-4 flex items-center justify-between group">
+                {editingProjectId === project.id ? (
+                  <div className="flex-1 flex items-center gap-4">
+                    <input 
+                      type="color" 
+                      value={editingProjectColor} 
+                      onChange={e => setEditingProjectColor(e.target.value)}
+                      className="w-8 h-8 rounded cursor-pointer border-0 p-0 bg-transparent"
+                    />
+                    <input 
+                      type="text" 
+                      value={editingProjectName} 
+                      onChange={e => setEditingProjectName(e.target.value)}
+                      className="flex-1 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded px-2 py-1 text-sm"
+                      autoFocus
+                    />
+                    <button onClick={() => handleUpdateProject(project.id)} className="p-1.5 bg-emerald-500 text-white rounded hover:bg-emerald-600"><Check size={16}/></button>
+                    <button onClick={() => setEditingProjectId(null)} className="p-1.5 bg-gray-200 dark:bg-slate-600 rounded hover:bg-gray-300 dark:hover:bg-slate-500"><X size={16}/></button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: project.color }}></div>
+                      <span className="font-medium">{project.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => {
+                          setEditingProjectId(project.id);
+                          setEditingProjectName(project.name);
+                          setEditingProjectColor(project.color);
+                        }}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-gray-500"
+                      >
+                        <Palette size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-500"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+            {projects.length === 0 && (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                No projects found. Create one to get started!
+              </div>
+            )}
+          </div>
+        </section>
+    </div>
+  );
+
+  const renderIntegrationsTab = (): React.ReactNode => (
+    <div className="space-y-8 animate-fade-in">
+        <section>
+          <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-white">Issue Trackers</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700/50 space-y-4 divide-y divide-gray-100 dark:divide-slate-700/50">
+            <div className="flex items-center justify-between pt-4 first:pt-0">
+              <div className="flex items-center gap-3">
+                <Github size={20} />
+                <div>
+                  <h4 className="font-semibold">GitHub Issues</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Sync GitHub issues to your local tasks.</p>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-black">Connect</button>
+            </div>
+            <div className="pt-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 rounded-lg text-xs text-amber-800 dark:text-amber-200">
+                <p className="font-bold mb-1">OAuth Setup Required:</p>
+                <p>1. Go to GitHub Developer Settings.</p>
+                <p>2. Set Callback URL to: <code className="bg-white/50 dark:bg-black/50 px-1 rounded">https://ais-dev-bvi5xnc6f2tivdbtqxc2f6-19181455005.asia-northeast1.run.app/auth/callback</code></p>
+                <p>3. Add CLIENT_ID and CLIENT_SECRET to environment variables.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-white">Calendar Sync</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CalendarIcon size={20} />
+                <div>
+                  <h4 className="font-semibold">CalDAV / iCal</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Import external calendar events as time blocks.</p>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Add Feed</button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-bold mb-3 text-slate-900 dark:text-white">Data Sovereignty</h3>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700/50 space-y-4 divide-y divide-gray-100 dark:divide-slate-700/50">
+            <div className="flex items-center justify-between pt-4 first:pt-0">
+              <div className="flex items-center gap-3">
+                <HardDrive size={20} />
+                <div>
+                  <h4 className="font-semibold">Self-Hosted WebDAV</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Sync data to your own server (Nextcloud, etc).</p>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium">Configure</button>
+            </div>
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-3">
+                <Cloud size={20} />
+                <div>
+                  <h4 className="font-semibold">Dropbox / Google Drive</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Zero-knowledge encrypted cloud sync.</p>
+                </div>
+              </div>
+              <button className="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium">Connect</button>
+            </div>
           </div>
         </section>
     </div>
@@ -336,29 +555,47 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const TABS = [
       { id: 'general', label: t('general'), icon: Database },
       { id: 'appearance', label: t('appearance'), icon: Palette },
+      { id: 'projects', label: t('projects'), icon: Layers },
+      { id: 'integrations', label: 'Integrations', icon: Share2 },
       { id: 'sync', label: t('account'), icon: Cloud },
       { id: 'ai', label: t('aiConfig'), icon: Key },
   ];
 
   return (
-    <div className="h-full flex">
-      <aside className="w-52 bg-black/5 dark:bg-white/5 p-3 border-r border-white/20 dark:border-black/20">
-        <nav className="space-y-1">
-           {TABS.map(tab => (
-             <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-left ${activeTab === tab.id ? 'bg-black/10 dark:bg-white/10 text-slate-900 dark:text-white' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-              >
-                <tab.icon size={18} />
-                <span>{tab.label}</span>
-            </button>
-           ))}
-        </nav>
-      </aside>
-      <main className="flex-1 p-6 overflow-y-auto bg-slate-50/30 dark:bg-transparent">
+    <div className={`h-full flex ${isMobile ? 'flex-col' : ''}`}>
+      {isMobile ? (
+        <div className="p-4 border-b border-white/20 dark:border-black/20 bg-black/5 dark:bg-white/5">
+          <select 
+            value={activeTab} 
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium"
+          >
+            {TABS.map(tab => (
+              <option key={tab.id} value={tab.id}>{tab.label}</option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <aside className="w-52 bg-black/5 dark:bg-white/5 p-3 border-r border-white/20 dark:border-black/20">
+          <nav className="space-y-1">
+             {TABS.map(tab => (
+               <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-left ${activeTab === tab.id ? 'bg-black/10 dark:bg-white/10 text-slate-900 dark:text-white' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
+                >
+                  <tab.icon size={18} />
+                  <span>{tab.label}</span>
+              </button>
+             ))}
+          </nav>
+        </aside>
+      )}
+      <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6'} overflow-y-auto bg-slate-50/30 dark:bg-transparent`}>
           {activeTab === 'general' && renderGeneralTab()}
           {activeTab === 'appearance' && renderAppearanceTab()}
+          {activeTab === 'projects' && renderProjectsTab()}
+          {activeTab === 'integrations' && renderIntegrationsTab()}
           {activeTab === 'sync' && renderSyncTab()}
           {activeTab === 'ai' && renderAIConfigTab()}
       </main>

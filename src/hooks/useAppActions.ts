@@ -49,12 +49,27 @@ export const useAppActions = ({
   handleAddCard: (deckId: string, front: string, back: string) => void;
   handleUpdateCard: (deckId: string, cardId: string, updates: Partial<Flashcard>) => void;
   handleDeleteCard: (deckId: string, cardId: string) => void;
+  handleUpdateTask: (id: string, updates: Partial<Task>) => void;
+  handleDeleteTask: (id: string) => void;
   handleAiAction: (functionName: string, args: Record<string, unknown>) => void;
 } => {
 
   const handleStartTimer = useCallback((description: string, project: string): void => {
+    // If there's an active timer, stop it first to prevent double-accounting
+    if (activeTimer) {
+      const endTime = Date.now();
+      const newEntry: TimeEntry = {
+        id: `time-${endTime}`,
+        description: activeTimer.description,
+        startTime: activeTimer.startTime,
+        endTime,
+        duration: Math.floor((endTime - activeTimer.startTime) / 1000),
+        project: activeTimer.project,
+      };
+      setTimeEntries(prev => [newEntry, ...prev]);
+    }
     setActiveTimer({ startTime: Date.now(), description, project });
-  }, [setActiveTimer]);
+  }, [activeTimer, setActiveTimer, setTimeEntries]);
 
   const handleStopTimer = useCallback((): void => {
     if (!activeTimer) return;
@@ -155,6 +170,28 @@ export const useAppActions = ({
           cards: d.cards.filter(c => c.id !== cardId)
       } : d));
   }, [setDecks]);
+
+  const handleUpdateTask = useCallback((id: string, updates: Partial<Task>): void => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === id) {
+        const updatedTask = { ...t, ...updates };
+        // Status Machine Transitions
+        if (updates.status === 'done' && t.status !== 'done') {
+          updatedTask.completed = true;
+          // Secondary actions: stop timers if this task was active
+          if (activeTimer?.description === t.title) {
+            handleStopTimer();
+          }
+        }
+        return updatedTask;
+      }
+      return t;
+    }));
+  }, [setTasks, activeTimer, handleStopTimer]);
+
+  const handleDeleteTask = useCallback((id: string): void => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+  }, [setTasks]);
 
   const handleAiAction = useCallback((functionName: string, args: Record<string, unknown>): void => {
     switch (functionName) {
@@ -278,6 +315,8 @@ export const useAppActions = ({
   return {
     handleStartTimer,
     handleStopTimer,
+    handleUpdateTask,
+    handleDeleteTask,
     handleAddNote,
     handleUpdateNote,
     handleDeleteNote,

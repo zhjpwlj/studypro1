@@ -15,7 +15,11 @@ const playlist: Track[] = [
     { title: 'Just Relax', artist: 'Lesfm', url: 'https://cdn.pixabay.com/audio/2022/05/20/audio_51a2aae3a7.mp3' }
 ];
 
-const Music: React.FC = () => {
+interface MusicProps {
+    isMobile?: boolean;
+}
+
+const Music: React.FC<MusicProps> = ({ isMobile }) => {
   const { t } = useContext(LanguageContext);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -90,7 +94,7 @@ const Music: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4 bg-gradient-to-br from-indigo-900 to-slate-900 text-white relative">
+    <div className={`h-full flex flex-col items-center justify-center text-center bg-gradient-to-br from-indigo-900 to-slate-900 text-white relative ${isMobile ? 'p-4 space-y-6' : 'p-6 space-y-4'}`}>
         <audio 
             ref={audioRef}
             src={currentTrack.url}
@@ -104,32 +108,32 @@ const Music: React.FC = () => {
 
         {error && <div className="absolute top-4 left-4 right-4 bg-red-500/90 text-white text-xs px-3 py-2 rounded-lg flex items-center justify-center gap-2 animate-fade-in z-10"><AlertCircle size={16} /><span>{error}</span></div>}
 
-        <div className="w-40 h-40 bg-slate-800 rounded-lg shadow-2xl flex items-center justify-center relative overflow-hidden group">
-            <MusicIcon size={64} className={`text-slate-600 group-hover:scale-110 transition-transform duration-500 ${isPlaying && !isBuffering ? 'animate-pulse' : ''}`} />
+        <div className={`${isMobile ? 'w-48 h-48' : 'w-40 h-40'} bg-slate-800 rounded-lg shadow-2xl flex items-center justify-center relative overflow-hidden group`}>
+            <MusicIcon size={isMobile ? 80 : 64} className={`text-slate-600 group-hover:scale-110 transition-transform duration-500 ${isPlaying && !isBuffering ? 'animate-pulse' : ''}`} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             {isBuffering && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><Loader2 size={32} className="animate-spin" /></div>}
         </div>
         
         <div>
-            <h3 className="text-xl font-bold">{currentTrack.title}</h3>
+            <h3 className={`${isMobile ? 'text-2xl' : 'text-xl'} font-bold`}>{currentTrack.title}</h3>
             <p className="text-slate-400 text-sm">{currentTrack.artist}</p>
         </div>
 
         <div className="w-full max-w-xs cursor-pointer group" onClick={handleSeek}>
-          <div className="h-1 flex-1 bg-slate-700 rounded-full overflow-hidden relative"><div className="h-full bg-white transition-all duration-100 ease-linear" style={{width: `${progress}%`}}></div><div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/10 transition-opacity"></div></div>
+          <div className="h-1.5 flex-1 bg-slate-700 rounded-full overflow-hidden relative"><div className="h-full bg-white transition-all duration-100 ease-linear" style={{width: `${progress}%`}}></div><div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/10 transition-opacity"></div></div>
         </div>
 
-        <div className="flex items-center gap-6">
-            <button onClick={() => handleSkip('backward')} className="text-slate-300 hover:text-white"><SkipBack size={24} /></button>
-            <button onClick={togglePlay} className="w-16 h-16 bg-white text-slate-900 rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg">{isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}</button>
-            <button onClick={() => handleSkip('forward')} className="text-slate-300 hover:text-white"><SkipForward size={24} /></button>
+        <div className="flex items-center gap-8">
+            <button onClick={() => handleSkip('backward')} className="text-slate-300 hover:text-white"><SkipBack size={32} /></button>
+            <button onClick={togglePlay} className="w-20 h-20 bg-white text-slate-900 rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg">{isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}</button>
+            <button onClick={() => handleSkip('forward')} className="text-slate-300 hover:text-white"><SkipForward size={32} /></button>
         </div>
         
         <div className="w-full max-w-xs flex items-center gap-3 text-slate-400">
-            <button onClick={() => setIsMuted(!isMuted)}>{isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}</button>
-            <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={(e) => setVolume(parseFloat(e.target.value))} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full" />
+            <button onClick={() => setIsMuted(!isMuted)}>{isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}</button>
+            <input type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={(e) => setVolume(parseFloat(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full" />
             <div className="relative">
-                <button onClick={() => setIsPlaylistOpen(p => !p)}><ListMusic size={18} /></button>
+                <button onClick={() => setIsPlaylistOpen(p => !p)}><ListMusic size={20} /></button>
                 {isPlaylistOpen && (
                     <div className="absolute bottom-full right-0 mb-2 w-64 bg-slate-800/80 backdrop-blur-md rounded-lg shadow-lg p-2 text-left text-sm animate-fade-in z-20">
                         {playlist.map((track, index) => (

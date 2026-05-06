@@ -3,14 +3,17 @@ import { Divide, X, Minus, Plus, Percent } from 'lucide-react';
 import { LanguageContext } from '../../contexts/LanguageContext';
 
 
-const Calculator: React.FC = () => {
+interface CalculatorProps {
+  isMobile?: boolean;
+}
+
+const Calculator: React.FC<CalculatorProps> = ({ isMobile }) => {
   const { t } = useContext(LanguageContext);
   const [displayValue, setDisplayValue] = useState('0');
   const [expression, setExpression] = useState('');
   const [isScientific, setIsScientific] = useState(false);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   
-
 
   const inputDigit = (digit: string): void => {
     if (waitingForOperand) {
@@ -86,14 +89,14 @@ const Calculator: React.FC = () => {
   };
 
   const Button: React.FC<{ onClick: () => void; className?: string; children: React.ReactNode }> = ({ onClick, className, children }): React.ReactElement => (
-    <button onClick={onClick} className={`rounded-xl flex items-center justify-center text-xl font-medium transition-all active:scale-95 shadow-sm hover:brightness-110 ${className}`}>
+    <button onClick={onClick} className={`rounded-xl flex items-center justify-center text-xl font-medium transition-all active:scale-95 shadow-sm hover:brightness-110 ${isMobile ? 'h-12 text-lg' : 'h-full'} ${className}`}>
       {children}
     </button>
   );
 
   return (
-    <div className="h-full flex flex-col bg-slate-900 text-white p-4 select-none">
-      <div className="flex justify-between items-center mb-4 flex-shrink-0">
+    <div className={`h-full flex flex-col bg-slate-900 text-white select-none ${isMobile ? 'p-2' : 'p-4'}`}>
+      <div className={`flex justify-between items-center flex-shrink-0 ${isMobile ? 'mb-2' : 'mb-4'}`}>
           <div className="flex gap-2">
             <button 
                 onClick={() => setIsScientific(false)} 
@@ -110,12 +113,12 @@ const Calculator: React.FC = () => {
           </div>
       </div>
       
-      <div className="flex-1 bg-black/20 rounded-2xl mb-4 p-6 flex flex-col items-end justify-end overflow-hidden shadow-inner">
-        <div className="text-slate-400 text-lg h-8 mb-1">{expression}</div>
-        <div className="text-6xl font-light tracking-tight break-all">{displayValue}</div>
+      <div className={`flex-1 bg-black/20 rounded-2xl flex flex-col items-end justify-end overflow-hidden shadow-inner ${isMobile ? 'mb-2 p-4' : 'mb-4 p-6'}`}>
+        <div className={`text-slate-400 h-8 mb-1 ${isMobile ? 'text-sm' : 'text-lg'}`}>{expression}</div>
+        <div className={`font-light tracking-tight break-all ${isMobile ? 'text-4xl' : 'text-6xl'}`}>{displayValue}</div>
       </div>
 
-      <div className={`grid gap-3 flex-shrink-0 h-[60%] ${isScientific ? 'grid-cols-5' : 'grid-cols-4'}`}>
+      <div className={`grid gap-2 flex-shrink-0 ${isScientific ? 'grid-cols-5' : 'grid-cols-4'} ${isMobile ? 'h-auto pb-4' : 'h-[60%]'}`}>
         {isScientific && (
             <>
                 <Button onClick={() => performScientific('sin')} className="bg-slate-800 text-sm">sin</Button>

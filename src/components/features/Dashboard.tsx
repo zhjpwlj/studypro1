@@ -1,9 +1,10 @@
 
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo, useContext, useEffect } from 'react';
 import { Task, Project, TimeEntry, Event, Class, Goal } from '../../types';
 import { PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, PieLabelRenderProps } from 'recharts';
-import { CalendarDays, CheckCircle2, Circle, Palette, GraduationCap, CheckSquare, Target } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Circle, Palette, GraduationCap, CheckSquare, Target, Quote, Sparkles, RefreshCw } from 'lucide-react';
 import { LanguageContext } from '../../contexts/LanguageContext';
+import { GoogleGenAI } from "@google/genai";
 
 interface DashboardProps {
   tasks: Task[];
@@ -13,23 +14,51 @@ interface DashboardProps {
   events: Event[];
   classes: Class[];
   goals: Goal[];
+  isMobile?: boolean;
 }
 
-const AgendaItem: React.FC<{ time: string; title: string; color: string; icon: React.ReactNode }> = ({ time, title, color, icon }): React.ReactElement => (
-    <div className="flex items-center gap-4">
-        <div className="w-12 text-right text-sm font-semibold text-slate-400">{time}</div>
+const AgendaItem: React.FC<{ time: string; title: string; color: string; icon: React.ReactNode; isMobile?: boolean }> = ({ time, title, color, icon, isMobile }): React.ReactElement => (
+    <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-4'}`}>
+        <div className={`${isMobile ? 'w-10 text-xs' : 'w-12 text-sm'} text-right font-semibold text-slate-400`}>{time}</div>
         <div className="flex-shrink-0 w-1 h-8 rounded-full" style={{backgroundColor: color}}></div>
-        <div className="flex-1 flex items-center gap-3">
+        <div className={`flex-1 flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
             <div className="text-slate-400">{icon}</div>
-            <span className="font-medium text-sm">{title}</span>
+            <span className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>{title}</span>
         </div>
     </div>
 );
 
 
-const Dashboard: React.FC<DashboardProps> = ({ tasks, projects, setProjects, timeEntries, events, classes, goals }): React.ReactElement => {
+const Dashboard: React.FC<DashboardProps> = ({ tasks, projects, setProjects, timeEntries, events, classes, goals, isMobile }): React.ReactElement => {
     const [selectedProjectId, setSelectedProjectId] = useState<string>(projects[0]?.id || '');
+    const [motivation, setMotivation] = useState<{ quote: string; author: string } | null>(null);
+    const [isLoadingMotivation, setIsLoadingMotivation] = useState(false);
     const { t } = useContext(LanguageContext);
+
+    const fetchMotivation = async (): Promise<void> => {
+        setIsLoadingMotivation(true);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+            const response = await ai.models.generateContent({
+                model: "gemini-3-flash-preview",
+                contents: "Give me a short, powerful motivational quote for a student. Return it in JSON format: { \"quote\": \"...\", \"author\": \"...\" }",
+                config: { responseMimeType: "application/json" }
+            });
+            if (response.text) {
+                const data = JSON.parse(response.text);
+                setMotivation(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch motivation:", err);
+            setMotivation({ quote: "The secret of getting ahead is getting started.", author: "Mark Twain" });
+        } finally {
+            setIsLoadingMotivation(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMotivation();
+    }, []);
 
     const pieData = useMemo(() => {
         return projects.map(project => ({
@@ -132,16 +161,50 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, projects, setProjects, tim
     };
 
     return (
-        <div className="h-full overflow-y-auto p-6 space-y-6 text-white bg-transparent">
+        <div className={`h-full overflow-y-auto ${isMobile ? 'p-4 space-y-4' : 'p-6 space-y-6'} text-white bg-transparent`}>
+            {/* 0. Motivation Row */}
+            <div className="bg-gradient-to-r from-indigo-600/40 to-purple-600/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Quote size={120} />
+                </div>
+                <div className="flex-1 relative z-10">
+                    <div className="flex items-center gap-2 mb-2 text-indigo-300">
+                        <Sparkles size={18} />
+                        <span className="text-sm font-bold uppercase tracking-wider">{t('motivation')}</span>
+                    </div>
+                    {isLoadingMotivation ? (
+                        <div className="animate-pulse space-y-2">
+                            <div className="h-6 bg-white/10 rounded w-3/4"></div>
+                            <div className="h-4 bg-white/10 rounded w-1/4"></div>
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in slide-in-from-left-4 duration-700">
+                            <p className="text-xl md:text-2xl font-medium italic leading-relaxed">
+                                &quot;{motivation?.quote}&quot;
+                            </p>
+                            <p className="text-indigo-300 mt-2 font-bold">— {motivation?.author}</p>
+                        </div>
+                    )}
+                </div>
+                <button 
+                    onClick={fetchMotivation}
+                    disabled={isLoadingMotivation}
+                    className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+                    title="Refresh quote"
+                >
+                    <RefreshCw size={20} className={isLoadingMotivation ? 'animate-spin' : ''} />
+                </button>
+            </div>
+
             {/* 1. Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className={`grid grid-cols-1 ${isMobile ? '' : 'lg:grid-cols-2 xl:grid-cols-4'} gap-6`}>
                 {/* Breakdown Pie Chart */}
                 <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 p-6 rounded-xl flex flex-col xl:col-span-1">
                     <h2 className="text-lg font-semibold mb-4">{t('projectBreakdown')}</h2>
-                    <div className="flex-1 min-h-[250px] relative">
+                    <div className={`flex-1 ${isMobile ? 'min-h-[200px]' : 'min-h-[250px]'} relative`}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={pieData} cx="50%" cy="50%" labelLine={false} label={renderCustomizedLabel} outerRadius={80} innerRadius={40} dataKey="value" stroke="none">
+                                <Pie data={pieData} cx="50%" cy="50%" labelLine={false} label={renderCustomizedLabel} outerRadius={isMobile ? 60 : 80} innerRadius={isMobile ? 30 : 40} dataKey="value" stroke="none">
                                     {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                                 </Pie>
                                 <RechartsTooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
@@ -188,13 +251,13 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, projects, setProjects, tim
                  </div>
 
                 {/* Agenda */}
-                <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 p-6 rounded-xl flex flex-col xl:col-span-2">
+                <div className={`bg-slate-900/50 backdrop-blur-md border border-white/10 p-6 rounded-xl flex flex-col ${isMobile ? '' : 'xl:col-span-2'}`}>
                     <h2 className="text-lg font-semibold mb-4">{t('agendaToday')}</h2>
-                    <div className="flex-1 space-y-4 overflow-y-auto pr-2">
+                    <div className={`flex-1 space-y-4 overflow-y-auto pr-2 ${isMobile ? 'max-h-[300px]' : ''}`}>
                         {agendaItems.length > 0 ? agendaItems.map((item, index) => (
-                            <AgendaItem key={index} {...item} />
+                            <AgendaItem key={index} {...item} isMobile={isMobile} />
                         )) : (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500 py-8">
                                 <CheckCircle2 size={32} className="mb-2"/>
                                 <p className="font-medium">{t('allClear')}</p>
                                 <p className="text-sm">{t('noEvents')}</p>

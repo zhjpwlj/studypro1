@@ -13,6 +13,7 @@ export enum AppModule {
   GOALS = 'GOALS',
   MUSIC = 'MUSIC',
   FLASHCARDS = 'FLASHCARDS',
+  SUMMARIZER = 'SUMMARIZER',
 }
 
 export type Language = 'en' | 'jp' | 'cn' | 'es' | 'fr' | 'de' | 'kr' | 'pt' | 'it' | 'ru' | 'ar';
@@ -39,6 +40,11 @@ export interface Subtask {
   id: string;
   title: string;
   completed: boolean;
+  subtasks?: Subtask[]; // Recursive subtasks
+  timeSpent?: number;
+  status?: TaskStatus;
+  priority?: Priority;
+  estimatedTime?: number; // in seconds
 }
 
 export interface Link {
@@ -55,7 +61,7 @@ export interface Counter {
 
 export type Priority = 1 | 2 | 3 | 4;
 
-export type TaskStatus = 'todo' | 'in_progress' | 'done';
+export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'archived';
 
 export interface Task {
   id: string;
@@ -68,14 +74,21 @@ export interface Task {
   subtasks?: Subtask[];
   deadline?: string; // ISO Date string
   deadlineTime?: string; // HH:mm
-  notes?: string;
+  notes?: string; // Markdown description
   links?: Link[];
   counters?: Counter[];
   classId?: string; 
   inMyDay?: boolean; // Microsoft To Do style "My Day"
+  isBacklog?: boolean;
   timeSpent?: number; // Total seconds focused on this task
+  estimatedTime?: number; // in seconds
   recurrence?: 'daily' | 'weekly' | 'monthly' | 'none';
   attachments?: string[];
+  createdAt: number; // timestamp
+  reminder?: string; // ISO Date string or relative offset
+  remoteId?: string; // For integration mapping
+  remoteSource?: 'jira' | 'github' | 'gitlab' | 'gitea' | 'redmine' | 'openproject';
+  remoteUrl?: string;
 }
 
 

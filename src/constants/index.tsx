@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, CheckSquare, Clock as PomodoroIcon, Users, Settings, BrainCircuit, Calculator, NotebookText, CloudSun, Calendar as CalendarIcon, Target, Music as MusicIcon, Layers } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Clock as PomodoroIcon, Users, Settings, BrainCircuit, Calculator, NotebookText, CloudSun, Calendar as CalendarIcon, Target, Music as MusicIcon, Layers, Sparkles } from 'lucide-react';
 import { AppModule } from '../types';
 
 export const appIcons: Record<string, React.ElementType> = {
@@ -16,4 +16,5 @@ export const appIcons: Record<string, React.ElementType> = {
   [AppModule.GOALS]: Target,
   [AppModule.MUSIC]: MusicIcon,
   [AppModule.FLASHCARDS]: Layers,
+  [AppModule.SUMMARIZER]: Sparkles,
 };

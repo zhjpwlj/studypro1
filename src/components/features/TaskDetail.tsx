@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Task, Subtask, Priority, Project, Counter } from '../../types';
-import { X, Flag, Calendar, FileText, CheckSquare, Plus, Trash2, Wand2, Loader2, Check, Repeat, Paperclip, UploadCloud, Link as LinkIcon, Tag, Coffee, Minus, Clock } from 'lucide-react';
+import { X, Flag, Calendar, FileText, CheckSquare, Plus, Trash2, Wand2, Loader2, Check, Repeat, Paperclip, UploadCloud, Link as LinkIcon, Tag, Coffee, Minus, Clock, ChevronDown } from 'lucide-react';
 import { generateSubtasks } from '../../services/geminiService';
+
+import { LanguageContext } from '../../contexts/LanguageContext';
 
 interface TaskDetailProps {
   taskId: string;
@@ -19,6 +21,129 @@ const priorityMap: { [key in Priority]: { label: string; color: string; bg: stri
   4: { label: 'None', color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800', borderColor: 'border-slate-200 dark:border-slate-700' },
 };
 
+interface SubtaskItemProps {
+  subtask: Subtask;
+  onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Subtask>) => void;
+  level?: number;
+}
+
+const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onToggle, onDelete, onUpdate, level = 0 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(subtask.title);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const handleSave = (): void => {
+    if (editTitle.trim() && editTitle !== subtask.title) {
+      onUpdate(subtask.id, { title: editTitle.trim() });
+    }
+    setIsEditing(false);
+  };
+
+  const handleAddNestedSubtask = (): void => {
+    const newSub: Subtask = { id: `sub-${Date.now()}`, title: 'New nested subtask', completed: false };
+    onUpdate(subtask.id, { subtasks: [...(subtask.subtasks || []), newSub] });
+    setIsExpanded(true);
+  };
+
+  return (
+    <div className="space-y-1">
+      <div 
+        className="group flex items-start gap-3 p-2 hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors cursor-pointer rounded-lg"
+        style={{ marginLeft: `${level * 20}px` }}
+      >
+        <button 
+          onClick={(e) => { e.stopPropagation(); onToggle(subtask.id); }} 
+          className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${subtask.completed ? 'bg-[var(--accent-color)] border-[var(--accent-color)]' : 'border-gray-300 dark:border-slate-600 hover:border-[var(--accent-color)]'}`}
+        >
+          {subtask.completed && <Check size={10} className="text-white"/>}
+        </button>
+        
+        <div className="flex-1 flex flex-col min-w-0">
+          {isEditing ? (
+            <input 
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleSave}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              className="flex-1 bg-white dark:bg-slate-800 text-sm px-2 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+              autoFocus
+            />
+          ) : (
+            <div className="flex items-center justify-between group/actions">
+              <div className="flex items-center gap-2 flex-1 min-w-0" onClick={() => setIsEditing(true)}>
+                <span className={`text-sm truncate ${subtask.completed ? 'line-through text-gray-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                  {subtask.title}
+                </span>
+                {subtask.subtasks && subtask.subtasks.length > 0 && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                    className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-800 rounded text-gray-400"
+                  >
+                    <ChevronDown size={12} className={`transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover/actions:opacity-100 transition-opacity">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleAddNestedSubtask(); }}
+                  className="p-1 hover:bg-gray-200 dark:hover:bg-slate-800 rounded text-gray-400 hover:text-[var(--accent-color)]"
+                  title="Add nested subtask"
+                >
+                  <Plus size={12}/>
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onDelete(subtask.id); }} 
+                  className="p-1 hover:bg-gray-200 dark:hover:bg-slate-800 rounded text-gray-400 hover:text-red-500"
+                >
+                  <Trash2 size={12}/>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {isExpanded && subtask.subtasks && subtask.subtasks.length > 0 && (
+        <div className="space-y-1">
+          {subtask.subtasks.map(st => (
+            <SubtaskItem 
+              key={st.id} 
+              subtask={st} 
+              level={level + 1}
+              onToggle={(id) => {
+                const updateNested = (subs: Subtask[]): Subtask[] => subs.map(s => {
+                  if (s.id === id) return { ...s, completed: !s.completed };
+                  if (s.subtasks) return { ...s, subtasks: updateNested(s.subtasks) };
+                  return s;
+                });
+                onUpdate(subtask.id, { subtasks: updateNested(subtask.subtasks || []) });
+              }}
+              onDelete={(id) => {
+                const deleteNested = (subs: Subtask[]): Subtask[] => subs.filter(s => s.id !== id).map(s => ({
+                  ...s,
+                  subtasks: s.subtasks ? deleteNested(s.subtasks) : undefined
+                }));
+                onUpdate(subtask.id, { subtasks: deleteNested(subtask.subtasks || []) });
+              }}
+              onUpdate={(id, updates) => {
+                const updateNested = (subs: Subtask[]): Subtask[] => subs.map(s => {
+                  if (s.id === id) return { ...s, ...updates };
+                  if (s.subtasks) return { ...s, subtasks: updateNested(s.subtasks) };
+                  return s;
+                });
+                onUpdate(subtask.id, { subtasks: updateNested(subtask.subtasks || []) });
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTasks, onClose }) => {
   const task = useMemo(() => tasks.find(t => t.id === taskId), [tasks, taskId]);
   
@@ -27,12 +152,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
   const [newSubtask, setNewSubtask] = useState('');
   const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
   
-  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
-  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('');
-
   const [newTag, setNewTag] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [newCounterName, setNewCounterName] = useState('');
+
+  const [activeTab, setActiveTab] = useState<'details' | 'subtasks' | 'resources'>('details');
+  const { t } = React.useContext(LanguageContext);
 
   useEffect(() => {
     if (task) {
@@ -74,22 +199,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
     updateTask({ subtasks: newSubtasks });
   };
   
-  const startEditingSubtask = (subtask: Subtask): void => {
-      setEditingSubtaskId(subtask.id);
-      setEditingSubtaskTitle(subtask.title);
-  }
-
-  const saveSubtaskEdit = (): void => {
-      if (!editingSubtaskId || !editingSubtaskTitle.trim()) {
-          setEditingSubtaskId(null);
-          return;
-      }
-      const newSubtasks = task?.subtasks?.map(st => 
-          st.id === editingSubtaskId ? { ...st, title: editingSubtaskTitle } : st
-      );
-      updateTask({ subtasks: newSubtasks });
-      setEditingSubtaskId(null);
-  }
+  const handleSetReminder = (reminder: string): void => {
+    updateTask({ reminder });
+  };
 
   const handleDeleteTask = (): void => {
     onClose();
@@ -198,7 +310,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
         />
         
         {/* Tags Row */}
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center mb-4">
              {task.tags?.map(tag => (
                    <span key={tag} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-md text-xs flex items-center gap-1 font-medium">
                        <Tag size={10} className="opacity-50"/>
@@ -216,11 +328,34 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
                />
              </form>
         </div>
+
+        {/* Tabs */}
+        <div className="flex gap-4 border-b border-gray-100 dark:border-slate-800">
+            <button 
+                onClick={() => setActiveTab('details')}
+                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'details' ? 'border-[var(--accent-color)] text-[var(--accent-color)]' : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            >
+                Properties
+            </button>
+            <button 
+                onClick={() => setActiveTab('subtasks')}
+                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'subtasks' ? 'border-[var(--accent-color)] text-[var(--accent-color)]' : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'} flex items-center gap-1`}
+            >
+                Subtasks <span className="bg-gray-100 dark:bg-slate-800 text-[10px] px-1.5 py-0.5 rounded-full">{task.subtasks?.length || 0}</span>
+            </button>
+            <button 
+                onClick={() => setActiveTab('resources')}
+                className={`pb-2 text-sm font-bold border-b-2 transition-colors ${activeTab === 'resources' ? 'border-[var(--accent-color)] text-[var(--accent-color)]' : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+            >
+                Content & Links
+            </button>
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8 custom-scrollbar">
         
-        {/* Properties Grid */}
+        {/* Properties/Details Tab */}
+        {activeTab === 'details' && (
         <section className="grid grid-cols-2 gap-x-6 gap-y-4">
              {/* Project */}
              <div className="space-y-1.5 col-span-2">
@@ -295,9 +430,27 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
                     </div>
                 </div>
              </div>
+
+             {/* Reminders */}
+             {task.deadline && (
+               <div className="space-y-1.5 col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1"><Clock size={10}/> {t('reminders')}</label>
+                  <select
+                      value={task.reminder || 'none'}
+                      onChange={(e) => handleSetReminder(e.target.value)}
+                      className="w-full bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]/20"
+                  >
+                      <option value="none">{t('reminderNone')}</option>
+                      <option value="1h">{t('reminder1Hour')}</option>
+                      <option value="1d">{t('reminder1Day')}</option>
+                  </select>
+               </div>
+             )}
         </section>
+        )}
 
         {/* Subtasks Section */}
+        {activeTab === 'subtasks' && (
         <section>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
@@ -320,34 +473,20 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
                 </div>
              )}
 
-            <div className="divide-y divide-gray-100 dark:divide-slate-800">
+            <div className="divide-y divide-gray-100 dark:divide-slate-800 p-2">
                 {task.subtasks?.map(st => (
-                <div key={st.id} className="group flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors cursor-pointer">
-                    <button onClick={(e) => { e.stopPropagation(); handleToggleSubtask(st.id); }} className={`mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${st.completed ? 'bg-[var(--accent-color)] border-[var(--accent-color)]' : 'border-gray-300 dark:border-slate-600 hover:border-[var(--accent-color)]'}`}>
-                    {st.completed && <Check size={10} className="text-white"/>}
-                    </button>
-                    
-                    {editingSubtaskId === st.id ? (
-                        <input 
-                            type="text"
-                            value={editingSubtaskTitle}
-                            onChange={(e) => setEditingSubtaskTitle(e.target.value)}
-                            onBlur={saveSubtaskEdit}
-                            onKeyDown={(e) => e.key === 'Enter' && saveSubtaskEdit()}
-                            className="flex-1 bg-white dark:bg-slate-800 text-sm px-2 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
-                            autoFocus
-                        />
-                    ) : (
-                        <div className="flex-1 flex justify-between items-start" onClick={() => startEditingSubtask(st)}>
-                            <span className={`text-sm ${st.completed ? 'line-through text-gray-400' : 'text-slate-700 dark:text-slate-200'}`}>
-                                {st.title}
-                            </span>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteSubtask(st.id); }} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12}/></button>
-                        </div>
-                    )}
-                </div>
+                  <SubtaskItem 
+                    key={st.id} 
+                    subtask={st} 
+                    onToggle={handleToggleSubtask}
+                    onDelete={handleDeleteSubtask}
+                    onUpdate={(id, updates) => {
+                      const newSubtasks = task.subtasks?.map(s => s.id === id ? { ...s, ...updates } : s);
+                      updateTask({ subtasks: newSubtasks });
+                    }}
+                  />
                 ))}
-                <form onSubmit={(e) => { e.preventDefault(); handleAddSubtask();}} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-900">
+                <form onSubmit={(e) => { e.preventDefault(); handleAddSubtask();}} className="flex items-center gap-3 p-3 mt-2 bg-gray-50 dark:bg-slate-900 rounded-lg">
                   <Plus size={16} className="text-gray-400"/>
                   <input
                     type="text"
@@ -360,10 +499,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
             </div>
           </div>
         </section>
+        )}
 
         {/* Links & Counters */}
-        <div className="space-y-6">
-            {/* Links */}
+        {activeTab === 'resources' && (
+        <>
+          <div className="space-y-6">
+              {/* Links */}
             <section className="bg-white dark:bg-slate-950 rounded-xl border border-gray-200 dark:border-slate-800 p-4">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
@@ -461,6 +603,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ taskId, tasks, projects, setTas
             className="w-full h-40 bg-yellow-50 dark:bg-slate-800/30 rounded-xl p-4 text-sm border-0 focus:ring-1 focus:ring-[var(--accent-color)] resize-none text-slate-700 dark:text-slate-300 leading-relaxed custom-scrollbar shadow-inner"
           />
         </section>
+        </>
+        )}
         
         <div className="text-[10px] text-gray-300 dark:text-slate-700 text-center pt-4 border-t border-gray-100 dark:border-slate-800">
              Task ID: {task.id}

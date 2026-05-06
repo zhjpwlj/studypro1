@@ -184,15 +184,17 @@ interface CalendarProps {
   onDeleteEvent: (id: string) => void;
   onAddClass: (cls: Class) => void;
   onDeleteClass: (id: string) => void;
+  isMobile?: boolean;
 }
 
-const CalendarView: React.FC<Pick<CalendarProps, 'events' | 'tasks' | 'classes' | 'onAddEvent' | 'onDeleteEvent'>> = ({ events, tasks, classes, onAddEvent, onDeleteEvent }) => {
+const CalendarView: React.FC<Pick<CalendarProps, 'events' | 'tasks' | 'classes' | 'onAddEvent' | 'onDeleteEvent' | 'isMobile'>> = ({ events, tasks, classes, onAddEvent, onDeleteEvent, isMobile }) => {
     const { t, language } = useContext(LanguageContext);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [isAddEventOpen, setIsAddEventOpen] = useState(false);
     const [quickAddText, setQuickAddText] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     
     // Calendar Generation
     const getDaysInMonth = (date: Date): { days: number; firstDay: number } => {
@@ -254,11 +256,18 @@ const CalendarView: React.FC<Pick<CalendarProps, 'events' | 'tasks' | 'classes' 
         c.sessions.filter(s => s.dayOfWeek === dayOfWeek).map(s => ({ ...c, session: s }))
     );
 
+    const handleDateClick = (date: Date): void => {
+        setSelectedDate(date);
+        if (isMobile) {
+            setIsSidebarOpen(true);
+        }
+    };
+
     return (
-        <div className="flex h-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">
+        <div className="flex h-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden">
             <div className="flex-1 flex flex-col p-4">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
+                    <h2 className={`font-bold flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
                         {currentDate.toLocaleDateString(language === 'en' ? 'en-US' : language === 'jp' ? 'ja-JP' : 'zh-CN', { month: 'long', year: 'numeric' })}
                     </h2>
                     <div className="flex gap-2">
@@ -288,7 +297,7 @@ const CalendarView: React.FC<Pick<CalendarProps, 'events' | 'tasks' | 'classes' 
                         return (
                             <button
                                 key={i}
-                                onClick={() => setSelectedDate(date)}
+                                onClick={() => handleDateClick(date)}
                                 className={`
                                     relative flex flex-col items-center justify-start pt-2 rounded-lg transition-colors
                                     ${isSelected ? 'bg-[var(--accent-color)] text-white shadow-md' : 'bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-800'}
@@ -308,13 +317,30 @@ const CalendarView: React.FC<Pick<CalendarProps, 'events' | 'tasks' | 'classes' 
             </div>
 
             {/* Sidebar Details */}
-            <div className="w-80 border-l border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+            {isMobile && isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
+            <div className={`
+                ${isMobile 
+                    ? `fixed right-0 top-0 bottom-0 z-50 transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} w-[85%]` 
+                    : 'w-80 border-l border-gray-200 dark:border-slate-800'}
+                bg-white dark:bg-slate-900 flex flex-col shadow-2xl
+            `}>
                 <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-950">
                     <div>
                         <h3 className="font-bold">{selectedDate.toLocaleDateString(language === 'en' ? 'en-US' : language === 'jp' ? 'ja-JP' : 'zh-CN', { weekday: 'long' })}</h3>
                         <p className="text-xs text-gray-500">{selectedDate.toLocaleDateString(language === 'en' ? 'en-US' : language === 'jp' ? 'ja-JP' : 'zh-CN', { month: 'long', day: 'numeric' })}</p>
                     </div>
-                    <button onClick={() => setIsAddEventOpen(true)} className="p-2 bg-[var(--accent-color)] text-white rounded-lg shadow-sm hover:brightness-110"><Plus size={18}/></button>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setIsAddEventOpen(true)} className="p-2 bg-[var(--accent-color)] text-white rounded-lg shadow-sm hover:brightness-110"><Plus size={18}/></button>
+                        {isMobile && (
+                            <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-800 rounded-lg"><X size={20}/></button>
+                        )}
+                    </div>
                 </div>
                 
                 {isAddEventOpen && (
@@ -421,15 +447,15 @@ const Calendar: React.FC<CalendarProps> = (props) => {
 
     return (
         <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">
-            <header className="flex-shrink-0 flex justify-center border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+            <header className="flex-shrink-0 flex justify-center border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-x-auto">
                 <nav className="flex gap-1 p-1">
                     {tabs.map(tab => (
                         <button 
                             key={tab.id} 
                             onClick={() => setActiveTab(tab.id as 'calendar' | 'schedule' | 'clock' | 'tools')} 
-                            className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-[var(--accent-color)] text-white shadow-md' : 'text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--accent-color)] text-white shadow-md' : 'text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
                         >
-                            <tab.icon size={16} />{tab.label}
+                            <tab.icon size={16} />{!props.isMobile && tab.label}
                         </button>
                     ))}
                 </nav>
@@ -439,9 +465,9 @@ const Calendar: React.FC<CalendarProps> = (props) => {
                 {activeTab === 'schedule' && <ClassSchedule classes={props.classes} onAddClass={props.onAddClass} onDeleteClass={props.onDeleteClass} />}
                 {activeTab === 'clock' && <WorldClock />}
                 {activeTab === 'tools' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-200 dark:bg-slate-800 h-full">
-                        <div className="bg-white dark:bg-slate-900 h-full"><Stopwatch /></div>
-                        <div className="bg-white dark:bg-slate-900 h-full"><Timer /></div>
+                    <div className={`grid gap-px bg-gray-200 dark:bg-slate-800 h-full ${props.isMobile ? 'grid-cols-1 overflow-y-auto' : 'grid-cols-2'}`}>
+                        <div className="bg-white dark:bg-slate-900 h-full min-h-[400px]"><Stopwatch /></div>
+                        <div className="bg-white dark:bg-slate-900 h-full min-h-[400px]"><Timer /></div>
                     </div>
                 )}
             </main>

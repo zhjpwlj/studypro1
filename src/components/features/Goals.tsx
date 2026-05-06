@@ -9,12 +9,13 @@ interface GoalsProps {
   onAddGoal: (goal: Omit<Goal, 'id'>) => void;
   onToggleGoal: (id: string) => void;
   onDeleteGoal: (id: string) => void;
+  isMobile?: boolean;
 }
 
 const ICONS = ['🎯', '💧', '🏃', '📚', '🧘', '💊', '💰', '🥦'];
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef'];
 
-const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteGoal }) => {
+const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteGoal, isMobile }) => {
   const { t, language } = useContext(LanguageContext);
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -38,7 +39,8 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
 
   const getLast7Days = (): Date[] => {
       const dates = [];
-      for (let i = 6; i >= 0; i--) {
+      const count = isMobile ? 5 : 7;
+      for (let i = count - 1; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
           dates.push(d);
@@ -63,15 +65,15 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">
-      <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+      <div className={`border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 ${isMobile ? 'p-4' : 'p-6'}`}>
           <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+              <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold flex items-center gap-2`}>
                   <Trophy className="text-[var(--accent-color)]" /> {t('habitTracker')}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('habitSubtitle')}</p>
+              {!isMobile && <p className="text-sm text-gray-500 dark:text-gray-400">{t('habitSubtitle')}</p>}
           </div>
           <button onClick={() => setIsAdding(!isAdding)} className="bg-[var(--accent-color)] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:opacity-90 transition-opacity">
-              <Plus size={18} /> {t('newHabit')}
+              <Plus size={18} /> {!isMobile && t('newHabit')}
           </button>
       </div>
 
@@ -86,14 +88,14 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
                       className="w-full text-lg font-bold bg-transparent border-b-2 border-gray-200 dark:border-slate-700 focus:border-[var(--accent-color)] focus:outline-none px-2 py-1"
                       autoFocus
                   />
-                  <div className="flex gap-4 items-center">
-                      <div className="flex gap-2">
+                  <div className={`flex items-center ${isMobile ? 'flex-col gap-4' : 'gap-4'}`}>
+                      <div className="flex gap-2 flex-wrap justify-center">
                           {ICONS.map(icon => (
                               <button type="button" key={icon} onClick={() => setNewIcon(icon)} className={`w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 ${newIcon === icon ? 'ring-2 ring-[var(--accent-color)]' : ''}`}>{icon}</button>
                           ))}
                       </div>
-                      <div className="w-px h-8 bg-gray-200 dark:bg-slate-700"></div>
-                      <div className="flex gap-2">
+                      {!isMobile && <div className="w-px h-8 bg-gray-200 dark:bg-slate-700"></div>}
+                      <div className="flex gap-2 flex-wrap justify-center">
                            {COLORS.map(color => (
                               <button type="button" key={color} onClick={() => setNewColor(color)} className={`w-6 h-6 rounded-full ${newColor === color ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-800 ring-gray-400' : ''}`} style={{ backgroundColor: color }}></button>
                           ))}
@@ -107,7 +109,7 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
           </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className={`flex-1 overflow-y-auto space-y-4 ${isMobile ? 'p-4' : 'p-6'}`}>
           {goals.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-400">
                   <Target size={64} className="mb-4 opacity-20"/>
@@ -118,25 +120,34 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
               goals.map(goal => {
                   const isDoneToday = goal.completedDates.includes(todayStr);
                   return (
-                      <div key={goal.id} className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-slate-700 flex flex-col md:flex-row items-center gap-6 group">
-                          <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
+                      <div key={goal.id} className={`bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-slate-700 flex flex-col items-center gap-4 group ${isMobile ? '' : 'md:flex-row md:gap-6'}`}>
+                          <div className="flex items-center gap-4 flex-1 w-full">
                               <button 
                                   onClick={() => toggleHabitForToday(goal)}
-                                  className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm transition-all duration-300 ${isDoneToday ? 'bg-gradient-to-br from-[var(--accent-color)] to-purple-600 text-white scale-105' : 'bg-gray-100 dark:bg-slate-700 text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
+                                  className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm transition-all duration-300 flex-shrink-0 ${isDoneToday ? 'bg-gradient-to-br from-[var(--accent-color)] to-purple-600 text-white scale-105' : 'bg-gray-100 dark:bg-slate-700 text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
                               >
                                   {goal.icon}
                               </button>
-                              <div>
-                                  <h3 className={`text-lg font-bold ${isDoneToday ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>{goal.title}</h3>
+                              <div className="flex-1 min-w-0">
+                                  <h3 className={`text-lg font-bold truncate ${isDoneToday ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>{goal.title}</h3>
                                   <div className="flex items-center gap-3 text-xs font-medium text-gray-500 mt-1">
                                       <span className="flex items-center gap-1 text-orange-500"><Flame size={12} fill="currentColor"/> {goal.streak} {t('dayStreak')}</span>
-                                      <span>•</span>
-                                      <span className="text-gray-400">{t('targetEveryday')}</span>
+                                      {!isMobile && (
+                                          <>
+                                            <span>•</span>
+                                            <span className="text-gray-400">{t('targetEveryday')}</span>
+                                          </>
+                                      )}
                                   </div>
                               </div>
+                              {isMobile && (
+                                  <button onClick={() => onDeleteGoal(goal.id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                      <Trash2 size={18} />
+                                  </button>
+                              )}
                           </div>
                           
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 w-full justify-between md:w-auto">
                               {last7Days.map((date, i) => {
                                   const dStr = date.toISOString().split('T')[0] || '';
                                   const isDone = isCompletedOn(goal, dStr);
@@ -155,9 +166,11 @@ const Goals: React.FC<GoalsProps> = ({ goals, onAddGoal, onToggleGoal, onDeleteG
                               })}
                           </div>
 
-                          <button onClick={() => onDeleteGoal(goal.id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100">
-                              <Trash2 size={18} />
-                          </button>
+                          {!isMobile && (
+                              <button onClick={() => onDeleteGoal(goal.id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100">
+                                  <Trash2 size={18} />
+                              </button>
+                          )}
                       </div>
                   );
               })

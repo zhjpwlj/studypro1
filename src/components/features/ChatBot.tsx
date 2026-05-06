@@ -225,13 +225,14 @@ const ChatView: React.FC<ChatViewProps> = ({ t, onAiAction }) => {
 interface ChatBotProps {
   projects: Project[];
   onAiAction: (functionName: string, args: Record<string, unknown>) => void;
+  isMobile?: boolean;
 }
 
 const ChatBot: React.FC<ChatBotProps> = (props) => {
   const { t } = useContext(LanguageContext);
   
   return (
-    <div className="h-full flex flex-col">
+    <div className={`h-full flex flex-col ${props.isMobile ? 'p-0' : ''}`}>
       <main className="flex-1 overflow-hidden">
           <ChatView t={t} onAiAction={props.onAiAction} />
       </main>

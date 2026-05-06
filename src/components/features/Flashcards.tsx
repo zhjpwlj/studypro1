@@ -11,9 +11,10 @@ interface FlashcardsProps {
   onAddCard: (deckId: string, front: string, back: string) => void;
   onUpdateCard: (deckId: string, cardId: string, updates: Partial<Flashcard>) => void;
   onDeleteCard: (deckId: string, cardId: string) => void;
+  isMobile?: boolean;
 }
 
-const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (deckId: string, cardId: string, updates: Partial<Flashcard>) => void }> = ({ deck, onFinish, onUpdateCard }) => {
+const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (deckId: string, cardId: string, updates: Partial<Flashcard>) => void, isMobile?: boolean }> = ({ deck, onFinish, onUpdateCard, isMobile }) => {
     const { t } = useContext(LanguageContext);
     const [queue] = useState<Flashcard[]>(deck.cards.sort((a, b) => a.nextReview - b.nextReview));
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -70,7 +71,7 @@ const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (
     }
 
     return (
-        <div className="h-full flex flex-col bg-slate-100 dark:bg-slate-950 p-6">
+        <div className={`h-full flex flex-col bg-slate-100 dark:bg-slate-950 ${isMobile ? 'p-4' : 'p-6'}`}>
             <div className="flex justify-between items-center mb-6">
                 <button onClick={onFinish} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">{t('exitStudy')}</button>
                 <span className="text-sm font-medium text-slate-400">{currentIndex + 1} / {queue.length}</span>
@@ -81,7 +82,7 @@ const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (
                     className={`w-full max-w-2xl aspect-[3/2] bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center p-8 text-center cursor-pointer transition-transform duration-500 transform-style-3d border border-gray-200 dark:border-slate-700 ${isFlipped ? 'rotate-y-180' : ''}`}
                     onClick={() => setIsFlipped(!isFlipped)}
                  >
-                     <div className="text-3xl font-medium text-slate-800 dark:text-white select-none">
+                     <div className={`${isMobile ? 'text-xl' : 'text-3xl'} font-medium text-slate-800 dark:text-white select-none`}>
                          {isFlipped ? currentCard.back : currentCard.front}
                      </div>
                      <div className="absolute bottom-4 text-xs text-gray-400 uppercase tracking-widest pointer-events-none">
@@ -90,28 +91,29 @@ const StudySession: React.FC<{ deck: Deck, onFinish: () => void, onUpdateCard: (
                  </div>
             </div>
 
-            <div className="h-24 flex items-center justify-center gap-4 mt-8">
+            <div className={`flex items-center justify-center gap-2 mt-8 ${isMobile ? 'flex-col' : 'h-24 gap-4'}`}>
                 {!isFlipped ? (
                     <button onClick={() => setIsFlipped(true)} className="w-full max-w-xs py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold shadow-lg">{t('showAnswer')}</button>
                 ) : (
-                    <>
-                        <button onClick={() => handleRate('again')} className="flex-1 py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400">{t('again')}</button>
-                        <button onClick={() => handleRate('hard')} className="flex-1 py-3 bg-orange-100 text-orange-700 rounded-xl font-bold hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400">{t('hard')}</button>
-                        <button onClick={() => handleRate('good')} className="flex-1 py-3 bg-blue-100 text-blue-700 rounded-xl font-bold hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400">{t('good')}</button>
-                        <button onClick={() => handleRate('easy')} className="flex-1 py-3 bg-green-100 text-green-700 rounded-xl font-bold hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400">{t('easy')}</button>
-                    </>
+                    <div className={`flex w-full max-w-2xl gap-2 ${isMobile ? 'flex-wrap' : ''}`}>
+                        <button onClick={() => handleRate('again')} className="flex-1 py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 text-xs sm:text-sm">{t('again')}</button>
+                        <button onClick={() => handleRate('hard')} className="flex-1 py-3 bg-orange-100 text-orange-700 rounded-xl font-bold hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400 text-xs sm:text-sm">{t('hard')}</button>
+                        <button onClick={() => handleRate('good')} className="flex-1 py-3 bg-blue-100 text-blue-700 rounded-xl font-bold hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 text-xs sm:text-sm">{t('good')}</button>
+                        <button onClick={() => handleRate('easy')} className="flex-1 py-3 bg-green-100 text-green-700 rounded-xl font-bold hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 text-xs sm:text-sm">{t('easy')}</button>
+                    </div>
                 )}
             </div>
         </div>
     )
 };
 
-const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck, onAddCard, onUpdateCard, onDeleteCard }) => {
+const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck, onAddCard, onUpdateCard, onDeleteCard, isMobile }) => {
   const { t } = useContext(LanguageContext);
   const [activeDeckId, setActiveDeckId] = useState<string | null>(null);
   const [isStudying, setIsStudying] = useState(false);
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [isAddingDeck, setIsAddingDeck] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Card adding state
   const [front, setFront] = useState('');
@@ -140,13 +142,21 @@ const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck,
   };
 
   if (isStudying && activeDeck) {
-      return <StudySession deck={activeDeck} onFinish={() => setIsStudying(false)} onUpdateCard={onUpdateCard} />;
+      return <StudySession deck={activeDeck} onFinish={() => setIsStudying(false)} onUpdateCard={onUpdateCard} isMobile={isMobile} />;
   }
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">
+    <div className="h-full flex bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white relative">
+        {/* Mobile Sidebar Backdrop */}
+        {isMobile && isSidebarOpen && (
+            <div 
+                className="fixed inset-0 bg-black/50 z-20 backdrop-blur-sm animate-fade-in"
+                onClick={() => setIsSidebarOpen(false)}
+            />
+        )}
+
         {/* Sidebar */}
-        <aside className="w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col">
+        <aside className={`${isMobile ? `fixed inset-y-0 left-0 z-30 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}` : 'w-64'} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col shadow-xl`}>
             <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
                 <h2 className="font-bold flex items-center gap-2"><Layers size={18} className="text-[var(--accent-color)]"/> {t('decks')}</h2>
                 <button onClick={() => setIsAddingDeck(true)} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"><Plus size={18}/></button>
@@ -170,7 +180,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck,
                 {decks.map(deck => (
                     <button 
                         key={deck.id}
-                        onClick={() => setActiveDeckId(deck.id)}
+                        onClick={() => { setActiveDeckId(deck.id); if(isMobile) setIsSidebarOpen(false); }}
                         className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between group ${activeDeckId === deck.id ? 'bg-[var(--accent-color)] text-white' : 'hover:bg-gray-100 dark:hover:bg-slate-700'}`}
                     >
                         <span className="truncate">{deck.title}</span>
@@ -187,21 +197,28 @@ const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck,
         <main className="flex-1 flex flex-col overflow-hidden">
             {activeDeck ? (
                 <>
-                    <header className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center">
-                        <div>
-                            <h1 className="text-2xl font-bold">{activeDeck.title}</h1>
-                            <p className="text-slate-500 text-sm">{activeDeck.cards.length} {t('cardsCount')}</p>
+                    <header className={`flex-shrink-0 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center ${isMobile ? 'p-4' : 'p-6'}`}>
+                        <div className="flex items-center gap-3">
+                            {isMobile && (
+                                <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                                    <Layers size={20} />
+                                </button>
+                            )}
+                            <div>
+                                <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold truncate max-w-[150px] sm:max-w-none`}>{activeDeck.title}</h1>
+                                <p className="text-slate-500 text-xs sm:text-sm">{activeDeck.cards.length} {t('cardsCount')}</p>
+                            </div>
                         </div>
                         <button 
                             onClick={() => setIsStudying(true)}
                             disabled={activeDeck.cards.length === 0}
-                            className="bg-[var(--accent-color)] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/20"
+                            className={`${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-2.5'} bg-[var(--accent-color)] text-white rounded-xl font-bold flex items-center gap-2 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/20`}
                         >
-                            <Play size={20} fill="currentColor" /> {t('studyNow')}
+                            <Play size={isMobile ? 16 : 20} fill="currentColor" /> {t('studyNow')}
                         </button>
                     </header>
                     
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-4' : 'p-6'}`}>
                          {/* Card List */}
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <button 
@@ -222,7 +239,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck,
                                      
                                      <button 
                                         onClick={() => onDeleteCard(activeDeck.id, card.id)}
-                                        className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className={`absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-opacity ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                      >
                                          <Trash2 size={16} />
                                      </button>
@@ -233,8 +250,17 @@ const Flashcards: React.FC<FlashcardsProps> = ({ decks, onAddDeck, onDeleteDeck,
                 </>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                    {isMobile && (
+                        <button 
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="mb-8 px-6 py-3 bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-gray-200 dark:border-slate-700 flex items-center gap-3 text-slate-600 dark:text-slate-300 font-bold"
+                        >
+                            <Layers size={20} className="text-[var(--accent-color)]" />
+                            {t('selectDeck')}
+                        </button>
+                    )}
                     <BookOpen size={64} className="mb-4 opacity-20"/>
-                    <p className="text-lg font-medium">{t('selectDeck')}</p>
+                    {!isMobile && <p className="text-lg font-medium">{t('selectDeck')}</p>}
                 </div>
             )}
         </main>
